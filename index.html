@@ -1,0 +1,1278 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#130930">
+<meta name="author" content="نوح فاضل الشامسي">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}img{max-width:100%}</style>
+<title>حرّاس الوادي الرقمي</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: one-screen handheld console — HUD strip, square pixel stage, Game-Boy style pad. Single deliberate dark world in the booklet's violet + teal. */
+:root{
+  --night:#130930; --violet-9:#1f1147; --violet-7:#34196e; --violet-5:#5b2fa6; --lav:#c9b8ef;
+  --teal:#2fc4a8; --mint:#3fe0b0; --cyan:#5ee6f0; --gold:#f2c14e; --danger:#ff5d7a; --ink:#fbf8ff;
+  --panel:linear-gradient(160deg,rgba(91,47,166,.97),rgba(31,17,71,.98));
+  --line:rgba(94,230,240,.38);
+  --f-display:'Lalezar','Tajawal',system-ui,sans-serif;
+  --f-body:'Tajawal','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:16px;overflow:hidden;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+#app{height:100%;max-width:540px;margin:0 auto;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:6px 8px}
+
+/* HUD */
+#hud{display:flex;align-items:center;gap:10px}
+.meter{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;gap:5px}
+.m-row{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--lav);white-space:nowrap}
+.m-row b{font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--cyan);line-height:1;font-variant-numeric:tabular-nums}
+.m-row .goal{margin-inline-start:auto;font-size:12px}
+.dias{display:flex;gap:7px;padding-inline:3px}
+.dia{width:9px;height:9px;transform:rotate(45deg);border:1.5px solid rgba(201,184,239,.55);box-sizing:border-box;flex:none}
+.dia.on{background:var(--teal);border-color:var(--cyan);box-shadow:0 0 6px rgba(94,230,240,.7)}
+.dia.base{background:var(--lav);border-color:var(--lav)}
+.hud-btn{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:700;font-size:14px;align-self:stretch}
+.snd{display:grid;place-items:center;padding:10px;color:var(--cyan)}.snd .x{display:none}.snd[aria-pressed="false"]{color:var(--lav)}.snd[aria-pressed="false"] .w{display:none}.snd[aria-pressed="false"] .x{display:block}
+#quest{font-size:13px;color:var(--lav);display:flex;align-items:center;gap:8px;min-height:18px;padding-inline:4px}
+#quest::before{content:"";width:8px;height:8px;transform:rotate(45deg);background:var(--gold);flex:none}
+
+/* Stage */
+#stage{flex:1;min-height:0;position:relative;display:grid;place-items:center}
+#cv{image-rendering:pixelated;image-rendering:crisp-edges;border-radius:10px;border:2px solid var(--violet-5);
+  box-shadow:0 0 0 4px var(--violet-9),0 10px 30px rgba(0,0,0,.5);background:#0d0620;max-width:100%}
+#dlg{position:absolute;left:6px;right:6px;bottom:6px;background:var(--panel);border:1.5px solid var(--cyan);border-radius:14px;
+  padding:16px 14px 12px;min-height:84px;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer}
+#dlg.sys{border-color:var(--gold)}
+.d-name{position:absolute;top:-13px;right:14px;background:var(--teal);color:#08201c;font-weight:800;font-size:13px;padding:3px 12px;
+  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+#dlg.sys .d-name{background:var(--gold)}
+#dText,#bMsg{margin:0;font-size:calc(17px*var(--fs,1));line-height:1.65;font-weight:500;text-wrap:pretty}
+.d-next{position:absolute;left:12px;bottom:6px;width:8px;height:8px;transform:rotate(45deg);background:var(--cyan);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.15}}
+#toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--violet-9);border:1.5px solid var(--gold);color:var(--ink);
+  border-radius:999px;padding:7px 16px;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.5);animation:pop .35s ease-out}
+#toast span{color:var(--gold)}
+@keyframes pop{from{transform:translate(-50%,-10px);opacity:0}}
+#fade{position:fixed;inset:0;background:#0d0620;opacity:0;pointer-events:none;transition:opacity .28s;z-index:40}
+#fade.on{opacity:1}
+
+/* Pad */
+#pad{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 0;touch-action:none;gap:12px}
+.dpad{display:grid;grid-template-columns:repeat(3,clamp(44px,13vw,56px));grid-template-rows:repeat(3,clamp(44px,13vw,56px));}
+.dpad button{background:var(--violet-7);border:1px solid var(--violet-5);touch-action:none;display:grid;place-items:center;padding:0}
+.dpad button::after{content:"";width:0;height:0;border:8px solid transparent}
+.dpad .u{grid-area:1/2;border-radius:10px 10px 0 0}.dpad .u::after{border-bottom-color:var(--lav);margin-top:-8px}
+.dpad .d{grid-area:3/2;border-radius:0 0 10px 10px}.dpad .d::after{border-top-color:var(--lav);margin-top:8px}
+.dpad .l{grid-area:2/1;border-radius:10px 0 0 10px}.dpad .l::after{border-right-color:var(--lav);margin-left:-8px}
+.dpad .r{grid-area:2/3;border-radius:0 10px 10px 0}.dpad .r::after{border-left-color:var(--lav);margin-left:8px}
+.dpad .c{grid-area:2/2;background:var(--violet-7);border:none}
+.dpad button.held{background:var(--violet-5)}
+.abtns{display:flex;flex-direction:column;align-items:center;gap:6px}
+#bA{width:clamp(70px,20vw,84px);height:clamp(70px,20vw,84px);border-radius:50%;border:none;touch-action:none;
+  background:radial-gradient(circle at 35% 30%,var(--mint),var(--teal) 55%,#147a6b);color:#06231e;font-family:var(--f-display);font-size:30px;
+  box-shadow:0 5px 0 #0e5a50,0 8px 18px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+#bA small{font-family:var(--f-body);font-size:12px;font-weight:800}
+#bA.held{transform:translateY(3px);box-shadow:0 2px 0 #0e5a50}
+.keys{font-size:11px;color:var(--lav);opacity:.75}
+
+/* Screens */
+.screen{position:fixed;inset:0;z-index:30;overflow-y:auto;box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:radial-gradient(120% 80% at 80% 0%,#4a2596 0%,var(--violet-9) 55%,var(--night) 100%)}
+.screen-in{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-height:100%;box-sizing:border-box}
+.chev{position:fixed;pointer-events:none;background:rgba(255,255,255,.95)}
+.chev.a{top:0;left:0;width:46vw;max-width:260px;height:120px;clip-path:polygon(0 0,100% 0,0 100%,0 82%,78% 0,0 0)}
+.chev.b{bottom:0;right:0;width:40vw;max-width:220px;height:110px;clip-path:polygon(100% 0,100% 100%,0 100%,100% 18%,100% 0);opacity:.12}
+
+/* Title */
+#title .screen-in{justify-content:center;text-align:center;position:relative;z-index:1}
+.mosaic{display:grid;grid-template-columns:repeat(7,14px);gap:4px;justify-content:center;direction:ltr}
+.mosaic i{width:14px;height:14px;border-radius:3px;display:block}
+.t-name{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,12vw,58px);line-height:1.1;margin:0;text-wrap:balance}
+.t-name em{font-style:normal;color:var(--cyan)}
+.t-sub{margin:0;color:var(--lav);font-size:17px;line-height:1.6}
+.t-years{display:flex;justify-content:center;gap:6px;direction:ltr;font-weight:800;font-size:13px;color:var(--lav)}
+.t-years span{border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.t-years span.now{background:var(--teal);color:#06231e;border-color:var(--teal)}
+.btn{border:none;border-radius:14px;padding:15px 18px;font-size:18px;font-weight:800;background:linear-gradient(180deg,var(--mint),var(--teal));color:#06231e;box-shadow:0 4px 0 #0e5a50}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #0e5a50}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+.btn.small{font-size:14px;padding:10px 14px}
+.btn.warn{background:var(--danger);color:#2a0612;box-shadow:0 4px 0 #8a2338}
+.t-note{font-size:12px;color:var(--lav);opacity:.8;margin:0;line-height:1.6}
+.heroes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hero-card{background:var(--panel);border:2px solid rgba(201,184,239,.25);border-radius:16px;padding:14px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:700;font-size:16px}
+.hero-card canvas{image-rendering:pixelated;width:96px;height:120px}
+.hero-card[aria-pressed="true"]{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(94,230,240,.25)}
+.field{display:flex;flex-direction:column;gap:6px;text-align:start;font-weight:700}
+.field input{font:inherit;font-size:18px;border-radius:12px;border:1.5px solid var(--line);background:var(--violet-9);color:var(--ink);padding:12px 14px;-webkit-user-select:text;user-select:text}
+.h2{font-family:var(--f-display);font-weight:400;font-size:30px;margin:0}
+
+/* Battle */
+#battle .screen-in{gap:10px}
+.b-top{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.b-top b{font-family:var(--f-display);font-weight:400;font-size:20px;flex:1;min-width:0}
+.hp{display:flex;gap:6px;direction:ltr}
+.hp .dia{width:12px;height:12px}
+.hp.enemy .dia.on{background:var(--danger);border-color:#ffb3c1;box-shadow:0 0 6px rgba(255,93,122,.6)}
+.b-arena{position:relative;height:clamp(150px,30vh,210px);display:grid;place-items:center;
+  background:radial-gradient(60% 18% at 50% 88%,rgba(94,230,240,.25),transparent 70%)}
+#bCv{width:clamp(130px,26vh,176px);image-rendering:pixelated;animation:bob 2.2s ease-in-out infinite}
+#bCv.hit{animation:hit .45s steps(2) 1}
+#bCv.gone{opacity:0;transform:scale(.4);transition:all .6s}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes hit{0%,100%{filter:none}25%{filter:brightness(3);transform:translateX(-8px)}75%{filter:brightness(3);transform:translateX(8px)}}
+#bHeroCv{position:absolute;bottom:0;right:4px;width:48px;image-rendering:pixelated}
+.b-me{display:flex;align-items:center;gap:10px;font-weight:700}
+.b-me .hp .dia.on{background:var(--teal);border-color:var(--cyan)}
+.b-me .help-left{margin-inline-start:auto;font-size:13px;color:var(--lav)}
+#battle.ouch .screen-in{animation:ouch .4s 1}
+@keyframes ouch{25%{transform:translateX(7px)}50%{transform:translateX(-7px)}75%{transform:translateX(4px)}}
+#battle.ouch{box-shadow:inset 0 0 0 4px var(--danger)}
+.b-box{position:relative;background:var(--panel);border:1.5px solid var(--cyan);border-radius:14px;padding:14px;min-height:70px;cursor:pointer}
+.b-box .d-next{display:none}
+.b-box.wait .d-next{display:block}
+.b-opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:start;background:var(--violet-7);border:1.5px solid rgba(201,184,239,.35);border-radius:12px;padding:12px 14px;font-size:calc(16px*var(--fs,1));font-weight:700;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+.opt .k{flex:none;width:24px;height:24px;display:grid;place-items:center;background:var(--violet-9);border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--cyan)}
+.opt:disabled{opacity:.35;text-decoration:line-through}
+.opt.right{background:#145e55;border-color:var(--mint)}
+.opt.wrong{background:#6b1d33;border-color:var(--danger)}
+.help{align-self:flex-start;background:transparent;border:1.5px dashed var(--cyan);color:var(--cyan);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px}
+
+/* Menu */
+.m-head{display:flex;align-items:center;gap:10px}
+.m-head .h2{flex:1}
+.tabs{display:flex;gap:6px;background:var(--violet-9);border-radius:12px;padding:4px}
+.tabs button{flex:1;border:none;background:transparent;border-radius:9px;padding:10px 4px;font-weight:800;font-size:15px;color:var(--lav)}
+.tabs button[aria-selected="true"]{background:var(--teal);color:#06231e}
+.pane{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.me{display:flex;gap:14px;align-items:center}
+.me canvas{width:64px;height:80px;image-rendering:pixelated;flex:none}
+.me h3{margin:0 0 4px;font-family:var(--f-display);font-weight:400;font-size:26px}
+.me p{margin:0;color:var(--lav)}
+.pillar{display:flex;align-items:center;gap:10px;padding:6px 0;font-weight:700}
+.pillar span{flex:1}
+.pillar .dias .dia{width:11px;height:11px}
+.lbl{font-size:12px;letter-spacing:.04em;color:var(--lav);margin:0 0 8px;font-weight:700}
+.badges{display:flex;gap:10px;flex-wrap:wrap}
+.badge{display:flex;align-items:center;gap:8px;background:var(--violet-9);border:1px solid var(--gold);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
+.badge::before{content:"";width:10px;height:10px;transform:rotate(45deg);background:var(--gold)}
+.muted{color:var(--lav);opacity:.75;font-size:14px;margin:0}
+.kcards{display:grid;grid-template-columns:1fr;gap:10px}
+.kcard{position:relative;background:linear-gradient(160deg,#1d8f86,#165f6e);border-radius:14px;padding:14px 14px 14px 46px;min-width:0}
+.kcard h4{margin:0 0 4px;font-size:16px;font-weight:800}
+.kcard p{margin:0;font-size:calc(15px*var(--fs,1));line-height:1.6}
+.kcard .num{position:absolute;left:14px;top:16px;width:20px;height:20px;transform:rotate(45deg);background:rgba(255,255,255,.9);display:grid;place-items:center}
+.kcard .num b{transform:rotate(-45deg);font-size:11px;color:#165f6e}
+.kcard.locked{background:var(--violet-9);border:1.5px dashed rgba(201,184,239,.35)}
+.kcard.locked h4{color:var(--lav)}
+.kcard.locked .num{background:var(--violet-7)}
+.kcard.locked .num b{color:var(--lav)}
+.dist{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(201,184,239,.15)}
+.dist:last-child{border:none}
+.dist .n{width:26px;height:26px;transform:rotate(45deg);display:grid;place-items:center;flex:none;background:var(--violet-7);border:1.5px solid var(--lav)}
+.dist .n b{transform:rotate(-45deg);font-size:13px}
+.dist.free .n{background:var(--teal);border-color:var(--cyan);color:#06231e}
+.dist div{flex:1;min-width:0}
+.dist h4{margin:0;font-size:15px}
+.dist p{margin:2px 0 0;font-size:13px;color:var(--lav)}
+.chip{font-size:12px;font-weight:800;border-radius:999px;padding:3px 9px;flex:none;background:var(--violet-7);color:var(--lav)}
+.chip.ok{background:var(--teal);color:#06231e}
+.chip.go{background:var(--gold);color:#2a1c00}
+
+/* Reward */
+#reward .screen-in{justify-content:center;text-align:center}
+.r-burst{width:80px;height:80px;margin:0 auto;transform:rotate(45deg);background:var(--teal);box-shadow:0 0 0 10px rgba(47,196,168,.25),0 0 50px var(--cyan);display:grid;place-items:center}
+.r-burst b{transform:rotate(-45deg);font-family:var(--f-display);font-weight:400;font-size:30px;color:#06231e}
+.r-list{display:flex;flex-direction:column;gap:8px;text-align:start}
+.r-list div{background:var(--violet-9);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:700;display:flex;gap:10px}
+.r-list div span{color:var(--gold);flex:none;font-variant-numeric:tabular-nums}
+.r-meter{display:flex;justify-content:center}
+.r-meter .dia{width:14px;height:14px;transition:all .4s}
+.r-meter .dias{gap:12px}
+.big-pct{font-family:var(--f-display);font-weight:400;font-size:52px;color:var(--cyan);margin:0;line-height:1;font-variant-numeric:tabular-nums}
+
+
+
+.credit{margin:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:14px;color:var(--lav);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0}
+.credit b{font-family:var(--f-display);font-weight:400;font-size:22px;color:var(--ink)}
+.credit span{font-size:13px;color:var(--cyan);font-weight:700}
+/* Levels & settings */
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lvl{background:var(--panel);border:2px solid rgba(201,184,239,.25);border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;gap:2px;align-items:center;font-weight:800;font-size:16px}
+.lvl small{font-weight:500;font-size:12px;color:var(--lav);line-height:1.4}
+.lvl[aria-pressed="true"]{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(94,230,240,.25)}
+.lvl-note{margin:0;font-size:13px;color:var(--lav);line-height:1.6;text-align:start}
+.set{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid rgba(201,184,239,.15)}
+.set:last-child{border:none}
+.set h4{margin:0;font-size:15px}
+.seg{display:flex;gap:6px;background:var(--violet-9);border-radius:12px;padding:4px}
+.seg button{flex:1;border:none;background:transparent;border-radius:9px;padding:9px 4px;font-weight:800;font-size:14px;color:var(--lav)}
+.seg button[aria-pressed="true"]{background:var(--teal);color:#06231e}
+.tabs button{font-size:14px}
+/* Chapters & ending */
+.ch-in{justify-content:center;text-align:center}
+.ch-tl{display:flex;gap:6px;justify-content:center}
+.ch-tl span{flex:1;max-width:80px;font-size:13px;font-weight:800;border-radius:999px;padding:5px 0;border:1px solid var(--line);color:var(--lav);position:relative}
+.ch-tl span.done{background:var(--teal);color:#06231e;border-color:var(--teal)}
+.ch-tl span.now{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(242,193,78,.2)}
+.ch-n{margin:0;font-weight:800;color:var(--gold);letter-spacing:.04em}
+.ch-y{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(44px,13vw,64px);line-height:1;color:var(--cyan);font-variant-numeric:tabular-nums}
+#chap .card{text-align:start}
+.en-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.en-stats div{background:var(--violet-9);border:1px solid var(--line);border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;gap:2px}
+.en-stats b{font-family:var(--f-display);font-weight:400;font-size:24px;color:var(--cyan);font-variant-numeric:tabular-nums}
+.en-stats span{font-size:12px;color:var(--lav)}
+#ending .r-meter .dia{width:14px;height:14px}#ending .r-meter .dias{gap:12px}
+/* Mini-games */
+.mn-head{display:flex;align-items:center;gap:14px}
+.mn-num{width:30px;height:30px;transform:rotate(45deg);background:var(--teal);display:grid;place-items:center;flex:none;margin-inline:6px}
+.mn-num b{transform:rotate(-45deg);color:#06231e;font-weight:800}
+.mn-t{flex:1;min-width:0}.mn-t .lbl{margin:0 0 2px}
+.mn-help{margin:0;color:var(--lav);line-height:1.6;font-size:calc(15px*var(--fs,1))}
+.mn-body{display:flex;flex-direction:column;gap:10px}
+.mn-status{min-height:26px;margin:0;font-weight:700;line-height:1.5}
+.mn-status.ok{color:var(--mint)}.mn-status.bad{color:var(--danger)}
+.mn-seq{margin:0;padding-inline-start:24px;display:flex;flex-direction:column;gap:6px}
+.mn-seq li{background:#145e55;border:1px solid var(--mint);border-radius:10px;padding:8px 10px;font-weight:700;line-height:1.5}
+.mn-seq:empty{display:none}
+.shake{animation:ouch .4s 1}
+.grid{display:grid;gap:4px;direction:ltr}
+.cell{aspect-ratio:1;border-radius:8px;background:var(--violet-7);border:1px solid rgba(201,184,239,.25);padding:0;min-width:0}
+.cell.on{background:var(--teal);border-color:var(--cyan)}
+.cell.tgt{border:2px solid var(--gold)}
+.cell svg{width:100%;height:100%;display:block}
+.chip-wrap{display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:start}
+.chip-wrap .lbl{margin-bottom:6px}
+.big-word{font-family:var(--f-display);font-weight:400;font-size:40px;text-align:center;margin:6px 0;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .opt{justify-content:center;text-align:center;flex-direction:column;align-items:center}
+.offer{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;text-align:start;font-size:15px;line-height:1.5}
+.offer b{font-size:13px;color:var(--cyan)}
+.offer .price{font-family:var(--f-display);font-weight:400;font-size:26px;color:var(--ink)}
+.offer .fee{color:var(--gold);font-weight:700}
+.offer.right{border-color:var(--mint);background:#145e55}.offer.wrong{border-color:var(--danger);background:#6b1d33}
+.legend{display:flex;justify-content:space-between;font-size:13px;color:var(--lav);direction:ltr}
+.sky{position:relative;height:180px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#0b0420,#2a1460 70%,#4a2596);border:1px solid var(--line)}
+.sky i{position:absolute;width:2px;height:2px;background:#fff;opacity:.7}
+.sky canvas{position:absolute;left:50%;width:36px;image-rendering:pixelated;transform:translateX(-50%);transition:bottom .9s ease-in}
+.stages{display:flex;gap:6px}
+.stages span{flex:1;text-align:center;font-size:12px;font-weight:800;border-radius:999px;padding:5px 4px;background:var(--violet-9);color:var(--lav);border:1px solid rgba(201,184,239,.25)}
+.stages span.done{background:var(--teal);color:#06231e}
+.stages span.now{border-color:var(--gold);color:var(--gold)}
+.bar{position:relative;height:30px;border-radius:999px;background:var(--violet-9);border:1px solid var(--line);overflow:hidden;direction:ltr}
+.bar .zone{position:absolute;top:0;bottom:0;background:rgba(63,224,176,.5)}
+.bar .needle{position:absolute;top:0;bottom:0;width:5px;margin-left:-2px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.order{background:var(--panel);border:1.5px solid var(--gold);border-radius:14px;padding:12px 14px}
+.order b{display:block;color:var(--gold);font-size:13px;margin-bottom:4px}
+.order p{margin:0;font-weight:700;font-size:16px;line-height:1.6}
+.prods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prod{position:relative;background:var(--violet-7);border:1.5px solid rgba(201,184,239,.35);border-radius:12px;padding:14px 8px;font-weight:800;font-size:15px}
+.prod .cnt{position:absolute;top:-8px;left:-6px;min-width:24px;height:24px;border-radius:12px;background:var(--gold);color:#2a1c00;font-size:13px;display:grid;place-items:center}
+.prod .cnt:empty{display:none}
+.row{display:flex;gap:8px}.row .btn{flex:1}
+.moe-test{display:flex;flex-direction:column;gap:6px}
+.moe-test div{background:var(--violet-9);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-height:640px){#dText,#bMsg{font-size:calc(15px*var(--fs,1))}.opt{padding:9px 12px;font-size:calc(15px*var(--fs,1))}}
+</style>
+
+</head>
+<body>
+<div id="app" dir="rtl">
+  <header id="hud">
+    <div class="meter">
+      <div class="m-row"><span>الاقتصاد الرقمي</span><b id="mVal">2%</b><span class="goal">الهدف 10%</span></div>
+      <div class="dias" id="mDia"></div>
+    </div>
+    <button id="sndBtn" class="hud-btn snd" aria-pressed="true" aria-label="الصوت"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="w" d="M16 8.5c1.3 1 2 2.2 2 3.5s-.7 2.5-2 3.5M18.5 6c2 1.6 3 3.6 3 6s-1 4.4-3 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path class="x" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button id="menuBtn" class="hud-btn">الحقيبة</button>
+  </header>
+  <div id="quest"></div>
+  <main id="stage">
+    <canvas id="cv" width="240" height="240"></canvas>
+    <div id="dlg" hidden><div class="d-name" id="dName"></div><p id="dText"></p><span class="d-next"></span></div>
+    <div id="toast" hidden></div>
+  </main>
+  <div id="pad" dir="ltr">
+    <div class="dpad">
+      <button class="u" data-d="up" aria-label="أعلى"></button>
+      <button class="l" data-d="left" aria-label="يسار"></button>
+      <span class="c"></span>
+      <button class="r" data-d="right" aria-label="يمين"></button>
+      <button class="d" data-d="down" aria-label="أسفل"></button>
+    </div>
+    <div class="abtns"><button id="bA" aria-label="تحدث أو تفاعل">A<small>تحدّث</small></button><span class="keys">الأسهم + مسافة</span></div>
+  </div>
+</div>
+<div id="fade"></div>
+
+<section id="title" class="screen">
+  <div class="chev a"></div><div class="chev b"></div>
+  <div class="screen-in" id="titleMain">
+    <div class="mosaic" id="mosaic"></div>
+    <h1 class="t-name">حرّاس الوادي <em>الرقمي</em></h1>
+    <p class="t-sub">مغامرة في مدينة عُمانية غطّاها الضباب. حرّر الحارات الثماني وارفع الاقتصاد الرقمي من 2% إلى 10%.</p>
+    <div class="t-years"><span class="now">2021</span><span>2025</span><span>2030</span><span>2035</span><span>2040</span></div>
+    <button class="btn" id="newBtn">مغامرة جديدة</button>
+    <button class="btn ghost" id="contBtn" hidden>أكمل المغامرة</button>
+    <p class="credit">من إعداد: <b>نوح فاضل الشامسي</b><span>سفير التحول الرقمي في محافظة البريمي</span></p>
+    <p class="t-note">لعبة تعليمية غير رسمية، معلوماتها مأخوذة من كتيّب البرنامج الوطني للاقتصاد الرقمي.</p>
+  </div>
+  <div class="screen-in" id="titleSel" hidden>
+    <h2 class="h2">اختر بطلك</h2>
+    <div class="heroes">
+      <button class="hero-card" data-h="boy" aria-pressed="true"><canvas width="64" height="80"></canvas>بطل</button>
+      <button class="hero-card" data-h="girl" aria-pressed="false"><canvas width="64" height="80"></canvas>بطلة</button>
+    </div>
+    <label class="field">اسم البطل<input id="heroName" maxlength="12" value="سالم" autocomplete="off"></label>
+    <div class="field">مستوى اللعب
+      <div class="levels" id="lvlPick">
+        <button class="lvl" data-l="easy" aria-pressed="false">سهل<small>6–8 سنوات</small></button>
+        <button class="lvl" data-l="mid" aria-pressed="true">متوسط<small>9–12 سنة</small></button>
+        <button class="lvl" data-l="adv" aria-pressed="false">متقدم<small>13+ والكبار</small></button>
+      </div>
+      <p class="lvl-note" id="lvlNote"></p>
+    </div>
+    <button class="btn" id="startBtn">ابدأ المغامرة</button>
+    <button class="btn ghost small" id="backBtn">رجوع</button>
+  </div>
+</section>
+
+<section id="battle" class="screen" hidden>
+  <div class="screen-in">
+    <div class="b-top"><b id="bName"></b><div class="hp enemy" id="bHp"></div></div>
+    <div class="b-arena"><canvas id="bCv" width="160" height="160"></canvas><canvas id="bHeroCv" width="48" height="60"></canvas></div>
+    <div class="b-me"><span id="bMe"></span><div class="hp" id="bHearts"></div><span class="help-left" id="bHelpLeft"></span></div>
+    <div class="b-box" id="bBox"><p id="bMsg"></p><span class="d-next"></span></div>
+    <div class="b-opts" id="bOpts"></div>
+  </div>
+</section>
+
+<section id="mini" class="screen" hidden>
+  <div class="screen-in">
+    <div class="mn-head"><span class="mn-num"><b id="mnNum"></b></span><div class="mn-t"><p class="lbl" id="mnProg"></p><h2 class="h2" id="mnTitle"></h2></div><button class="btn ghost small" id="mnExit">اطلع</button></div>
+    <p class="mn-help" id="mnHelp"></p>
+    <div class="mn-body" id="mnBody"></div>
+    <p class="mn-status" id="mnStatus" aria-live="polite"></p>
+  </div>
+</section>
+
+<section id="chap" class="screen" hidden>
+  <div class="screen-in ch-in">
+    <div class="ch-tl" id="chTL"></div>
+    <p class="ch-n" id="chN"></p>
+    <p class="ch-y" id="chY"></p>
+    <h2 class="h2" id="chT"></h2>
+    <p class="t-sub" id="chS"></p>
+    <div class="card"><p class="lbl">حارات هذا الفصل</p><div id="chD"></div></div>
+    <button class="btn" id="chGo">ابدأ الفصل</button>
+  </div>
+</section>
+
+<section id="ending" class="screen" hidden>
+  <div class="screen-in ch-in">
+    <div class="mosaic" id="mosaic2"></div>
+    <p class="ch-y">2040</p>
+    <h2 class="t-name">وصلنا <em dir="ltr" style="unicode-bidi:isolate">10%</em></h2>
+    <div class="r-meter"><div class="dias" id="enDia"></div></div>
+    <p class="t-sub">هزمت ضباب النسيان وحرّرت الحارات الثماني. الاقتصاد الرقمي في مدينة الوادي صار يساهم بـ 10% من الناتج المحلي، مثل هدف عُمان في 2040.</p>
+    <div class="en-stats" id="enStats"></div>
+    <p class="badge" style="align-self:center">حارس الوادي الرقمي</p>
+    <p class="credit">من إعداد: <b>نوح فاضل الشامسي</b><span>سفير التحول الرقمي في محافظة البريمي</span></p>
+    <button class="btn" id="enGo">رجوع للمدينة</button>
+  </div>
+</section>
+
+<section id="menu" class="screen" hidden>
+  <div class="screen-in">
+    <div class="m-head"><h2 class="h2">الحقيبة</h2><button class="btn ghost small" id="closeMenu">رجوع للعبة</button></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="hero" aria-selected="true">البطل</button>
+      <button role="tab" data-tab="cards" aria-selected="false">البطاقات</button>
+      <button role="tab" data-tab="dists" aria-selected="false">الحارات</button>
+      <button role="tab" data-tab="set" aria-selected="false">الإعدادات</button>
+    </div>
+    <div id="menuBody"></div>
+  </div>
+</section>
+
+<section id="reward" class="screen" hidden>
+  <div class="screen-in">
+    <div class="r-burst"><b id="rNum">5</b></div>
+    <h2 class="h2" id="rTitle"></h2>
+    <p class="big-pct" id="rPct">2%</p>
+    <div class="r-meter"><div class="dias" id="rDia"></div></div>
+    <div class="r-list" id="rList"></div>
+    <button class="btn" id="rGo">تابع المغامرة</button>
+  </div>
+</section>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const T=16, VIEW=15, SAVE_KEY='harras-wadi-v1';
+
+/* ---------------- content ---------------- */
+const PILLARS=[['infra','البنية الأساسية الرقمية'],['policy','السياسات والحوكمة'],['talent','المواهب والمهارات'],['innov','الابتكار والصناعات الرقمية']];
+const DISTRICTS=[
+ {id:1,prog:'التحول الرقمي الحكومي',place:'مجلس تحوّل',host:'موظفة الخدمات نوف',col:'#5ee6f0',pil:['policy','talent'],card:'c12',badge:'ختم الخدمة الرقمية',
+  intro:['هلا! هنا نحوّل معاملات الحكومة من طوابير وأوراق إلى خطوات رقمية سهلة.','بس الضباب لخبط ترتيب الخطوات. ساعدني أرتّب رحلتين للخدمة.']},
+ {id:2,prog:'الصناعة الرقمية',place:'ورشة الرقائق',host:'المهندس خالد',col:'#7b8cff',pil:['talent','innov'],card:'c13',badge:'الشريحة الذهبية',
+  intro:['هذي ورشة الرقائق. الشريحة الإلكترونية هي «عقل» كل جهاز ذكي.','الضباب مسح الدوائر! انسخ تصميم كل دائرة بالضبط عشان تشتغل الشريحة.']},
+ {id:3,prog:'الذكاء الاصطناعي والتقنيات المتقدمة',place:'بيت معين',host:'معين',col:'#b07cff',pil:['talent','innov'],card:'c14',badge:'صديق معين',
+  intro:['هذا بيتي! الذكاء الاصطناعي يتعلم من الأمثلة، ونسميها «بيانات».','علّمني: صنّف كل كلمة، هل هي أكلة عُمانية أو مكان في عُمان؟ وبعدها اختبرني.']},
+ {id:4,prog:'البنى الأساسية الرقمية',place:'حارة الألياف',host:'المهندسة أمل',col:'#3fe0b0',pil:['infra','talent'],card:'c15',badge:'كابل الألياف',
+  intro:['الإنترنت السريع يمشي في كابلات الألياف البصرية، مثل الماء في الفلج.','الضباب لخبط الكابلات. لفّ القطع لين يوصل النور من مركز البيانات إلى القرى الثلاث.']},
+ {id:5,prog:'الأمن السيبراني',place:'حصن الأمان',host:'حارس الحصن',col:'#2fc4a8',pil:['infra','policy'],card:'c11',badge:'درع حصن الأمان',intro:[]},
+ {id:6,prog:'الفضاء',place:'منصة الانطلاق',host:'يوسف',col:'#f2c14e',pil:['infra','innov'],card:'c16',badge:'جناح الفضاء',
+  intro:['هذي منصة الانطلاق! الصاروخ جاهز، بس الإطلاق يحتاج توقيت دقيق.','اضغط «أطلق» لما يكون المؤشر في المنطقة الخضراء. ثلاث مراحل لين نوصل المدار!']},
+ {id:7,prog:'التجارة الإلكترونية',place:'سوق الحلوى أونلاين',host:'مريم',col:'#ff8fa8',pil:['policy','innov'],card:'c17',badge:'متجر موثّق',
+  intro:['فتحت متجري أونلاين! الطلبات توصل من كل محافظات عُمان.','جهّز كل طلب بالضبط: لا ناقص ولا زايد، عشان الزبون يرجع يشتري.']},
+ {id:8,prog:'التقنيات المالية',place:'صرّاف مال',host:'المحاسب ناصر',col:'#6f86ff',pil:['infra','policy'],card:'c18',badge:'المحفظة الذكية',
+  intro:['هنا نتعلم الدفع الرقمي: بالجوال والبطاقة وبدون نقود.','بس انتبه! بعض العروض فيها رسوم مخفية. احسب السعر الكامل واختر العرض الأرخص.']},
+];
+const pillarName=k=>PILLARS.find(p=>p[0]===k)[1];
+const CHAPTERS=[
+ {n:1,years:'2021–2025',title:'حكومة رقمية متكاملة',d:[5,1,4],story:'البداية: نحمي الشبكات، ونحوّل الخدمات الحكومية إلى رقمية، ونوصل الإنترنت السريع لكل بيت.'},
+ {n:2,years:'2026–2030',title:'رقمنة أهم القطاعات الاقتصادية',d:[7,8],story:'الحين التقنية تدخل الاقتصاد: المتاجر تبيع أونلاين، والناس يدفعون بالجوال بدون نقود.'},
+ {n:3,years:'2031–2035',title:'ترسيخ الصناعات الرقمية الوطنية',d:[2,3],story:'نصنع تقنياتنا بأيدينا: رقائق إلكترونية وذكاء اصطناعي عُماني.'},
+ {n:4,years:'2036–2040',title:'تعزيز الصادرات الرقمية والتنافسية',d:[6],story:'آخر مرحلة قبل 2040: عُمان توصل الفضاء وتنافس العالم بتقنياتها. وبعدها المواجهة الأخيرة مع الضباب.'},
+];
+const chapterOf=id=>CHAPTERS.find(c=>c.d.includes(id));
+const curChapter=()=>CHAPTERS.find(c=>!c.d.every(x=>S.freed.includes(x)))||CHAPTERS[3];
+const isOpen=id=>S.freed.includes(id)||chapterOf(id).n<=curChapter().n;
+const andList=a=>a.length<2?a.join(''):a.slice(0,-1).join('، ')+' و'+a[a.length-1];
+const CARDS=[
+ {id:'c1',t:'انطلاقة البرنامج',x:'انطلق البرنامج الوطني للاقتصاد الرقمي في يوليو 2021 بمباركة مجلس الوزراء.',src:'الجد سعيد في الساحة'},
+ {id:'c2',t:'أربع مراحل',x:'الخطة أربع مراحل، كل مرحلة خمس سنوات: 2021–2025، 2026–2030، 2031–2035، 2036–2040.',src:'الجد سعيد في الساحة'},
+ {id:'c3',t:'الهدف الكبير',x:'كانت مساهمة الاقتصاد الرقمي حوالي 2% من الناتج المحلي الإجمالي، والهدف 10% بحلول 2040.',src:'معين'},
+ {id:'c4',t:'معين AI',x:'«معين» هو النموذج اللغوي الوطني للذكاء الاصطناعي التوليدي في سلطنة عُمان.',src:'معين'},
+ {id:'c5',t:'عُمان في الفضاء',x:'في المرحلة الأولى أُطلق أول صاروخ فضائي عُماني والقمر الاصطناعي «عُمان سات-1»، ويعمل 400 موظف في قطاع الفضاء.',src:'يوسف عند الصاروخ'},
+ {id:'c6',t:'شركات ناشئة',x:'200 شركة ناشئة عبر منصة عُمان للشركات الناشئة، وتمويل تجاوز 127 مليون ريال عُماني لدعم الشركات التقنية الناشئة.',src:'مريم بائعة الحلوى'},
+ {id:'c7',t:'مواهب عُمانية',x:'69% من الوظائف الفنية والتخصصية والقيادية في قطاع تقنية المعلومات يشغلها عُمانيون (2025).',src:'المهندسة أمل'},
+ {id:'c8',t:'درع عُمان',x:'جاءت سلطنة عُمان في الفئة الأولى عالمياً في مؤشر الجاهزية للأمن السيبراني 2024.',src:'حارس الحصن'},
+ {id:'c9',t:'المرتكزات الأربعة',x:'يقوم الاقتصاد الرقمي على: البنية الأساسية الرقمية، والسياسات والحوكمة، والمواهب والمهارات، والابتكار والصناعات الرقمية.',src:'المهندسة سارة داخل الحصن'},
+ {id:'c10',t:'ثلاثة محاور وثمانية برامج',x:'محاور البرنامج: المجتمع الرقمي، والحكومة الرقمية، والقطاعات والأعمال الرقمية. وتعمل لتحقيقها 8 برامج تنفيذية.',src:'لوحة الساحة'},
+ {id:'c11',t:'سر الحصن',x:'الأمن السيبراني يبني الثقة. عندما يشعر الناس بالأمان يستخدمون الخدمات الرقمية ويتسوقون أونلاين، فينمو الاقتصاد الرقمي.',src:'هزيمة ملك الضباب'},
+ {id:'c12',t:'خدمات بلا طوابير',x:'أُطلقت البوابة الموحدة للخدمات الحكومية الرقمية وتطبيقها، ومنصة «تجاوب» للمقترحات والشكاوى، وتطبيق «ثقة» للهوية الرقمية الآمنة.',src:'مجلس تحوّل'},
+ {id:'c13',t:'عقول رقمية عُمانية',x:'تأهّلت أكثر من 11,000 كفاءة وطنية عبر مبادرة «مكين»، واستقطبت عُمان استثمارات في أشباه الموصلات وتصنيع الرقائق الإلكترونية.',src:'ورشة الرقائق'},
+ {id:'c14',t:'استثمار في الذكاء',x:'تجاوزت الاستثمارات في مشاريع الذكاء الاصطناعي 79 مليون ريال عُماني، وتوسعت بيئة الشركات الناشئة لتشمل 22 شركة متخصصة في الذكاء الاصطناعي.',src:'بيت معين'},
+ {id:'c15',t:'شبكة لكل بيت',x:'وصلت التغطية السكانية لشبكات النطاق العريض المتنقل إلى 99%، وأصبحت 100% من المحطات تدعم الجيلين الرابع والخامس.',src:'حارة الألياف'},
+ {id:'c16',t:'من الدقم إلى الفضاء',x:'انطلق أول صاروخ فضائي تجريبي عُماني بنجاح من منطقة إطلاق الصواريخ بالدقم، وتوسع قطاع الفضاء ليشمل 25 شركة.',src:'منصة الانطلاق'},
+ {id:'c17',t:'متاجر موثّقة',x:'منصة «معروف عُمان» توثّق المتاجر الإلكترونية، ووصل عدد المتاجر الموثقة إلى 313 متجراً، وبلغ حجم التجارة الإلكترونية نحو 288 مليون ريال عُماني.',src:'سوق الحلوى أونلاين'},
+ {id:'c18',t:'دفع بلا نقود',x:'ارتفع حجم المعاملات غير النقدية بنسبة 703% بين 2020 و2025، وطُوّرت 4 أنظمة مدفوعات وطنية.',src:'صرّاف مال'},
+];
+const Q={
+ phish:[
+  {q:'وصلتك رسالة: «مبروك! ربحت جهازاً لوحياً، اضغط الرابط واكتب رقم بطاقة والدك». ماذا تفعل؟',o:['أضغط الرابط بسرعة قبل أن تنتهي الجائزة','أتجاهل الرسالة وأخبر أهلي','أرسلها لأصدقائي ليربحوا معي'],a:1,w:'هذه رسالة تصيّد. الجائزة المفاجئة التي تطلب بيانات سرية خدعة مشهورة.'},
+  {q:'ما هو «التصيّد الاحتيالي»؟',o:['صيد السمك في بحر عُمان','رسائل مزيفة تحاول سرقة معلوماتك','لعبة إلكترونية جديدة'],a:1,w:'المحتال يرمي «طُعماً» مثل رابط أو جائزة ليصطاد كلمة سرك أو بياناتك.'},
+  {q:'رسالة باسم «البنك» تقول: حسابك سيُغلق خلال ساعة! أرسل كلمة السر الآن. ما الإشارة المريبة؟',o:['الاستعجال والتهديد وطلب كلمة السر','أنها رسالة نصية','أن البنك له اسم'],a:0,w:'المحتالون يستعجلونك حتى لا تفكر. والجهات الرسمية لا تطلب كلمة السر في رسالة.'},
+  {q:'شخص في لعبة أونلاين لا تعرفه في الواقع يسأل عن عنوان بيتك ومدرستك. ماذا تفعل؟',o:['أعطيه العنوان لأنه لطيف','أعطيه اسم المدرسة فقط','لا أشارك معلوماتي وأخبر شخصاً كبيراً أثق به'],a:2,w:'معلوماتك الشخصية كنز. لا تشاركها مع غرباء على الإنترنت.'},
+ ],
+ pass:[
+  {q:'أي كلمة مرور أقوى؟',o:['123456','salim2015','Qalaa!Nizwa#72'],a:2,w:'الكلمة القوية طويلة وفيها حروف كبيرة وصغيرة وأرقام ورموز.'},
+  {q:'صديقك طلب كلمة مرور حسابك ليلعب بدلاً عنك. ماذا تفعل؟',o:['أعطيه إياها لأنه صديقي','أرفض بلطف، كلمة المرور سرية','أكتبها له على ورقة'],a:1,w:'كلمة المرور مثل مفتاح بيتك، لا تعطيها لأحد غير والديك.'},
+  {q:'ما هو «التحقق بخطوتين»؟',o:['قفل إضافي: رمز يصل لجوالك مع كلمة المرور','أن تمشي خطوتين قبل الدخول','أن تكتب كلمة المرور مرتين'],a:0,w:'حتى لو عرف أحد كلمة سرك، سيحتاج الرمز الذي يصل إلى جهازك.'},
+  {q:'هل تستخدم كلمة المرور نفسها لكل حساباتك؟',o:['نعم، أسهل للحفظ','لا، كل حساب له كلمة مختلفة','فقط في الألعاب'],a:1,w:'إذا سُرقت كلمة واحدة، لا تنفتح كل حساباتك معها.'},
+ ],
+ link:[
+  {q:'من أين تحمّل التطبيقات بأمان؟',o:['من المتجر الرسمي للتطبيقات','من أي رابط في رسالة','من إعلان يظهر فجأة'],a:0,w:'المتجر الرسمي يفحص التطبيقات، أما الروابط العشوائية فقد تحمل برامج ضارة.'},
+  {q:'ظهر إعلان: «جهازك مصاب بفيروس! اضغط هنا للتنظيف». ما الصحيح؟',o:['أضغط فوراً','أغلق الإعلان ولا أضغط','أكتب كلمة مروري'],a:1,w:'الإعلانات المخيفة حيلة لتنزيل برامج ضارة على جهازك.'},
+  {q:'لماذا نحدّث تطبيقات الجهاز؟',o:['لتغيير الألوان فقط','لسدّ الثغرات الأمنية وحماية الجهاز','لا فائدة من التحديث'],a:1,w:'التحديثات تصلح ثغرات يستغلها المخترقون.'},
+  {q:'رابط اسمه «g00gle-prize.win» يبدو:',o:['آمناً لأن فيه اسماً مشهوراً','مريباً: أرقام بدل حروف وجائزة','رسمياً'],a:1,w:'المحتالون يبدّلون حرفاً برقم ليشبه الرابط موقعاً مشهوراً.'},
+  {q:'شبكة واي فاي مجانية بلا كلمة مرور في مكان عام. ماذا تتجنب فيها؟',o:['مشاهدة الخريطة','الدخول إلى حسابات مهمة أو الدفع','معرفة الوقت'],a:1,w:'الشبكات المفتوحة قد يتجسس عليها غيرك، فلا تدخل فيها حسابات مهمة.'},
+ ],
+ boss:[
+  {q:'كم مرحلة في خطة البرنامج الوطني للاقتصاد الرقمي حتى 2040؟',o:['مرحلتان','4 مراحل','10 مراحل'],a:1,w:'أربع مراحل، كل واحدة خمس سنوات، من 2021 إلى 2040.'},
+  {q:'كم هدف مساهمة الاقتصاد الرقمي في الناتج المحلي الإجمالي بحلول 2040؟',o:['10%','1%','50%'],a:0,w:'بدأنا بحوالي 2% في المرحلة الأولى، والهدف 10% في 2040.'},
+  {q:'في أي فئة جاءت سلطنة عُمان عالمياً في مؤشر الجاهزية للأمن السيبراني 2024؟',o:['الفئة الأخيرة','الفئة الأولى','لم تشارك'],a:1,w:'عُمان في الفئة الأولى عالمياً، وهذا يجعل الناس والشركات تثق بخدماتها الرقمية.'},
+  {q:'ما اسم النموذج اللغوي الوطني للذكاء الاصطناعي في عُمان؟',o:['معين','سندباد','مجان'],a:0,w:'«معين AI» نموذج لغوي وطني أُطلق في المرحلة الأولى من البرنامج.'},
+  {q:'لماذا الأمن السيبراني مهم للاقتصاد الرقمي؟',o:['لأنه يجعل الناس والشركات يثقون بالخدمات الرقمية','لأنه يبطئ الإنترنت','لا علاقة بينهما'],a:0,w:'بدون ثقة لا يتسوق الناس أونلاين ولا يستخدمون الخدمات الرقمية.'},
+  {q:'شخص طلب منك الرمز الذي وصل إلى جوالك «للتأكد فقط». ماذا تفعل؟',o:['أعطيه الرمز','لا أشارك الرمز أبداً وأخبر أهلي','أنشره في المجموعة'],a:1,w:'رمز التحقق مفتاح حسابك. من يطلبه منك غالباً محتال.'},
+  {q:'ما القمر الاصطناعي العُماني الذي أُطلق في المرحلة الأولى؟',o:['عُمان سات-1','نجمة-7','مسقط-100'],a:0,w:'«عُمان سات-1» من إنجازات المرحلة الأولى في قطاع الفضاء.'},
+ ]
+};
+Q.final=[
+ {q:'متى انطلق البرنامج الوطني للاقتصاد الرقمي؟',o:['يوليو 2021','سنة 2010','سنة 2040'],a:0,w:'انطلق في يوليو 2021 بمباركة مجلس الوزراء.'},
+ {q:'ما المنصة الوطنية للمقترحات والشكاوى والبلاغات؟',o:['تجاوب','معروف','مكين'],a:0,w:'منصة «تجاوب» تسمع أفكار الناس وملاحظاتهم.'},
+ {q:'ما المنصة التي توثّق المتاجر الإلكترونية؟',o:['معروف عُمان','تجاوب','ثقة'],a:0,w:'التوثيق في «معروف عُمان» يعطي الزبائن ثقة بالمتجر.'},
+ {q:'كم كفاءة وطنية تأهلت عبر مبادرة «مكين»؟',o:['أكثر من 11,000','50 فقط','لا أحد'],a:0,w:'أكثر من 11,000 كفاءة وطنية تأهلت لسوق العمل الرقمي.'},
+ {q:'من أين انطلق أول صاروخ فضائي تجريبي عُماني؟',o:['منطقة إطلاق الصواريخ بالدقم','ميناء صحار','قلعة نزوى'],a:0,w:'انطلق بنجاح من منطقة إطلاق الصواريخ بالدقم.'},
+ {q:'من أين يتعلم الذكاء الاصطناعي؟',o:['من البيانات والأمثلة','من الأحلام','لا يتعلم أبداً'],a:0,w:'كل ما كانت البيانات أصح، كان الذكاء الاصطناعي أذكى.'},
+ {q:'ما التطبيق الذي يوفّر هوية رقمية آمنة للتعامل مع الخدمات الحكومية؟',o:['ثقة','معين','معروف'],a:0,w:'تطبيق «ثقة» يوفر هوية رقمية آمنة.'},
+ {q:'كم مرتكزاً يقوم عليه الاقتصاد الرقمي في البرنامج؟',o:['4 مرتكزات','8 مرتكزات','مرتكزان'],a:0,w:'البنية الأساسية، والسياسات والحوكمة، والمواهب، والابتكار.'},
+ {q:'كم وصلت التغطية السكانية لشبكات النطاق العريض المتنقل؟',o:['99%','10%','50%'],a:0,w:'99% من السكان تصلهم شبكات النطاق العريض المتنقل.'},
+];
+const ENEMIES={
+ final:{name:'ملك الضباب الأكبر',hp:6,spr:'boss2',pool:Q.final,taunt:'حررت الحارات؟ ههه! أنا آخر ضباب: ضباب النسيان. إذا نسيت ما تعلمته، يرجع كل شي مثل ما كان!',atk:'نفث ضباب النسيان!'},
+ phish:{name:'سمكة التصيّد',hp:3,spr:'fish',pool:Q.phish,taunt:'عندي جائزة لك... فقط أعطني كلمة سرك! هههه',atk:'رمت عليك رابطاً مزيفاً!'},
+ slime:{name:'هلام 123456',hp:3,spr:'slime',pool:Q.pass,taunt:'أنا أضعف كلمة سر في العالم، وأحب الحسابات المفتوحة!',atk:'التصق بحسابك!'},
+ worm:{name:'دودة الرابط المزيف',hp:3,spr:'worm',pool:Q.link,taunt:'اضغطني... اضغطني! أنا رابط بريء جداً.',atk:'زحفت إلى جهازك!'},
+ boss:{name:'ملك الضباب',hp:5,spr:'boss',pool:Q.boss,taunt:'أنا ملك الضباب! حجبت الحارات الثماني، ولن يصل اقتصادكم الرقمي إلى 10% أبداً!',atk:'نفث ضباباً كثيفاً!'},
+};
+
+/* ---------------- state ---------------- */
+const LV={
+ easy:{name:'سهل',ages:'6–8 سنوات',hearts:6,helps:1,hpAdj:-1,opts:2,note:'خياران فقط في كل سؤال، وقلوب أكثر، وألعاب أقصر، ومعين يقرأ الكلام بصوت عالٍ.'},
+ mid:{name:'متوسط',ages:'9–12 سنة',hearts:5,helps:2,hpAdj:0,opts:3,note:'ثلاثة خيارات في كل سؤال، والألعاب بطولها الكامل.'},
+ adv:{name:'متقدم',ages:'13 سنة فما فوق والكبار',hearts:4,helps:1,hpAdj:1,opts:3,note:'أسئلة إضافية أعمق من الكتيّب، ووحوش أقوى، وحسابات بالخصومات، وتوقيت أصعب.'}};
+const lv=()=>LV[S.level]||LV.mid;
+const QA={
+ phish:[{q:'وصلتك رسالة بريد من «مدير شركتك» يطلب تحويل مبلغ عاجل وبسرية تامة. ما الإجراء الصحيح؟',o:['أحوّل فوراً لأنه المدير','أتحقق منه عبر قناة اتصال مختلفة ومعروفة','أرد على الرسالة نفسها وأطلب التأكيد'],a:1,w:'هذا احتيال بانتحال الشخصية. التحقق يكون عبر قناة مستقلة، لا بالرد على الرسالة نفسها.'}],
+ pass:[{q:'ما أفضل طريقة لإدارة كلمات مرور كثيرة وقوية؟',o:['كتابتها في ملاحظات الجوال','مدير كلمات مرور موثوق مع التحقق بخطوتين','كلمة واحدة طويلة لكل الحسابات'],a:1,w:'مدير كلمات المرور يولّد ويحفظ كلمة فريدة لكل حساب.'}],
+ link:[{q:'ما المقصود بـ«الهندسة الاجتماعية» في الأمن السيبراني؟',o:['تصميم المباني الذكية','خداع الناس نفسياً لكشف معلومات أو تنفيذ إجراء','برمجة شبكات التواصل'],a:1,w:'المهاجم يستغل الثقة والاستعجال بدل اختراق الأنظمة تقنياً.'}],
+ boss:[{q:'ما محاور البرنامج الوطني للاقتصاد الرقمي الثلاثة؟',o:['المجتمع الرقمي، والحكومة الرقمية، والقطاعات والأعمال الرقمية','الفضاء والنفط والسياحة','التعليم والصحة والنقل'],a:0,w:'هذه المحاور الثلاثة في الإطار الاستراتيجي للبرنامج.'},
+  {q:'ما رؤية البرنامج الوطني للاقتصاد الرقمي؟',o:['اقتصاد رقمي رافد للاقتصاد الوطني، يعزز السيادة الرقمية، ويوفر فرصاً نوعية ومستدامة','الاعتماد الكامل على التقنيات المستوردة','إلغاء الخدمات الحكومية التقليدية فوراً'],a:0,w:'هذا نص رؤية البرنامج في إطاره الاستراتيجي.'}],
+ final:[{q:'كم بلغ حجم التجارة الإلكترونية في عُمان تقريباً حسب الكتيّب؟',o:['نحو 288 مليون ريال عُماني','نحو 3 ملايين ريال عُماني','نحو 50 مليار ريال عُماني'],a:0,w:'من منجزات برنامج التجارة الإلكترونية.'},
+  {q:'بكم ارتفع حجم المعاملات غير النقدية بين 2020 و2025؟',o:['703%','7%','70%'],a:0,w:'قفزة كبيرة في الدفع الرقمي.'},
+  {q:'كم كانت مساهمة قطاع الفضاء في الناتج المحلي الإجمالي حسب الكتيّب؟',o:['0.045%','4.5%','45%'],a:0,w:'قطاع ناشئ يكبر، وتوسع ليشمل 25 شركة.'},
+  {q:'ما نسبة العُمانيين في الوظائف الفنية والتخصصية والقيادية بقطاع تقنية المعلومات (2025)؟',o:['69%','19%','99%'],a:0,w:'نسبة تعمين عالية في الوظائف التقنية.'}]};
+const PREF_KEY='harras-prefs';let PR={fs:1,speed:'normal',tts:false};
+try{Object.assign(PR,JSON.parse(localStorage.getItem(PREF_KEY)||'{}'))}catch(e){}
+const savePR=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify(PR))}catch(e){}};
+const applyPR=()=>document.documentElement.style.setProperty('--fs',PR.fs);applyPR();
+const TTS=('speechSynthesis' in window)&&typeof SpeechSynthesisUtterance!=='undefined';
+let arVoice=null;const pickVoice=()=>{try{arVoice=speechSynthesis.getVoices().find(v=>/^ar/i.test(v.lang))||null}catch(e){}};
+if(TTS){pickVoice();try{speechSynthesis.onvoiceschanged=pickVoice}catch(e){}}
+function speak(t){if(!TTS||!PR.tts||!t)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[«»]/g,''));u.lang=arVoice?arVoice.lang:'ar-SA';if(arVoice)u.voice=arVoice;u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+function hush(){if(TTS)try{speechSynthesis.cancel()}catch(e){}}
+function fresh(){return {level:'mid',finalWon:false,hero:'boy',name:'سالم',cards:[],beaten:[],freed:[],pts:0,pillars:{infra:1,policy:1,talent:1,innov:1},map:'world',x:16,y:15,dir:'down',fortSeen:false}}
+let S=fresh();
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function loadSave(){try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null}catch(e){return null}}
+
+/* ---------------- helpers ---------------- */
+const hash=(x,y,k=0)=>{const s=Math.sin(x*127.1+y*311.7+k*74.7)*43758.5453;return s-Math.floor(s)};
+let c; // current ctx
+const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x|0,y|0,w,h)};
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ---------------- people ---------------- */
+const LOOK={
+ boy:{robe:'#f4f1ea',shade:'#cfc8d8',cap:'#f7f4ee',trim:'#2fc4a8',skin:'#c98e62',tassel:1},
+ girl:{robe:'#2a9d8f',shade:'#1f7a70',hem:'#f2c14e',scarf:'#7b3fb5',scarfS:'#5e2d8f',skin:'#c98e62',pants:'#f2c14e'},
+ grandpa:{robe:'#e9e2d0',shade:'#c4bba5',massar:'#b8475a',massar2:'#f2d27a',skin:'#b07a52',beard:1,cane:1},
+ guard:{robe:'#8a7350',shade:'#6b583c',massar:'#3b5fb8',massar2:'#e8e8f0',skin:'#b07a52',khanjar:1},
+ yousef:{robe:'#dfe6f2',shade:'#b6c0d4',cap:'#ffffff',trim:'#e04a5a',skin:'#c98e62',tassel:1},
+ maryam:{robe:'#d9476b',shade:'#a8344f',hem:'#f2c14e',scarf:'#2fc4a8',scarfS:'#1f8f7c',skin:'#c98e62',pants:'#f2c14e'},
+ amal:{robe:'#4a6be0',shade:'#3550b0',hem:'#5ee6f0',scarf:'#24124f',scarfS:'#150a33',skin:'#b98058',pants:'#5ee6f0'},
+ sara:{robe:'#7a4fc0',shade:'#5b3896',hem:'#3fe0b0',scarf:'#e9e2d0',scarfS:'#c4bba5',skin:'#c08458',pants:'#3fe0b0'},
+};
+function drawPerson(ox,oy,dir,step,L){
+ c.fillStyle='rgba(20,8,40,.3)';c.beginPath();c.ellipse(ox+8,oy+19,5,1.8,0,0,7);c.fill();
+ const side=dir==='left'||dir==='right', up=dir==='up';
+ const foot=L.pants?'#6b4428':'#6b4428';
+ P(ox+5,oy+17-(step===1?1:0),2,2,foot);P(ox+9,oy+17-(step===2?1:0),2,2,foot);
+ if(L.pants)P(ox+5,oy+16,6,1,L.pants);
+ if(side){P(ox+5,oy+9,6,7,L.robe);P(ox+(dir==='left'?10:5),oy+9,1,7,L.shade);if(L.hem)P(ox+5,oy+15,6,1,L.hem)}
+ else{P(ox+4,oy+9,8,7,L.robe);P(ox+11,oy+9,1,7,L.shade);if(L.hem)P(ox+4,oy+15,8,1,L.hem);
+  P(ox+3,oy+10,1,5,L.shade);P(ox+12,oy+10,1,5,L.shade);P(ox+3,oy+15,1,1,L.skin);P(ox+12,oy+15,1,1,L.skin)}
+ if(side){P(ox+(dir==='left'?7:8),oy+10,1,5,L.shade);P(ox+(dir==='left'?7:8),oy+15,1,1,L.skin)}
+ if(!up&&!side&&L.tassel)P(ox+8,oy+10,1,4,L.trim);
+ if(L.khanjar&&!up){P(ox+4,oy+12,8,1,'#5a3a20');if(!side){P(ox+7,oy+12,2,1,'#e0e0ea');P(ox+8,oy+13,1,2,'#e0e0ea');P(ox+7,oy+14,1,1,'#e0e0ea')}}
+ if(L.cane)P(ox+13,oy+10,1,9,'#6b4428');
+ P(ox+5,oy+3,6,6,L.skin);
+ const eye='#24131f';
+ if(L.scarf){
+  P(ox+4,oy+2,8,8,L.scarf);P(ox+3,oy+9,10,2,L.scarf);P(ox+11,oy+3,1,7,L.scarfS);
+  if(dir==='down'){P(ox+6,oy+4,4,4,L.skin);P(ox+6,oy+6,1,1,eye);P(ox+9,oy+6,1,1,eye)}
+  else if(dir==='left'){P(ox+5,oy+4,3,4,L.skin);P(ox+5,oy+6,1,1,eye)}
+  else if(dir==='right'){P(ox+8,oy+4,3,4,L.skin);P(ox+10,oy+6,1,1,eye)}
+  return;
+ }
+ if(up)P(ox+5,oy+4,6,5,'#2a1a1a');
+ else if(dir==='down'){P(ox+6,oy+6,1,1,eye);P(ox+9,oy+6,1,1,eye)}
+ else P(ox+(dir==='left'?5:10),oy+6,1,1,eye);
+ if(L.beard&&!up)P(side?ox+(dir==='left'?5:7):ox+6,oy+8,side?4:4,2,'#efefef');
+ if(L.massar){P(ox+4,oy+2,8,3,L.massar);P(ox+5,oy+1,6,1,L.massar);P(ox+4,oy+3,8,1,L.massar2);if(up)P(ox+7,oy+5,2,3,L.massar)}
+ else if(L.cap){P(ox+5,oy+2,6,3,L.cap);P(ox+6,oy+1,4,1,L.cap);for(let i=0;i<3;i++)P(ox+5+i*2+(up?1:0),oy+3,1,1,L.trim)}
+}
+function drawMoeen(cx,cy){
+ cx=Math.round(cx);cy=Math.round(cy);
+ c.fillStyle='rgba(94,230,240,.16)';c.beginPath();c.arc(cx,cy,9,0,7);c.fill();
+ P(cx-4,cy-5,8,10,'#5ee6f0');P(cx-5,cy-4,10,8,'#5ee6f0');
+ P(cx-3,cy-4,6,8,'#24124f');P(cx-4,cy-3,8,6,'#24124f');
+ P(cx-2,cy-1,1,2,'#5ee6f0');P(cx+1,cy-1,1,2,'#5ee6f0');
+ P(cx,cy-8,1,3,'#5ee6f0');P(cx-1,cy-9,2,1,'#3fe0b0');
+}
+
+/* ---------------- pixel sprites ---------------- */
+const SPR={
+ fish:{pal:{o:'#ff6b8b',d:'#c43a66',e:'#ffffff',p:'#1a0a2e',f:'#ffb3c4',h:'#d0d0e0',m:'#fff2c4',n:'#c4a050'},rows:[
+  '.........h......','.........h......','.........h......','........hh......','.......h........','.......h.mmmm...','.......h.mnnm...',
+  '....oooo.mmmm...','..ooooooo.......','.oeoooooooo..ff.','.opooooooodoffff','.ooooooooddooff..','..oooooodddooff.','....dddddd...ff.','......ff........','................']},
+ slime:{pal:{y:'#ffcf4a',d:'#d9922e',w:'#ffffff',p:'#2a1020',m:'#6a2a1a'},rows:[
+  '................','................','................','.......yy.......','......yyyy......','....yyyyyyyy....','...yyyyyyyyyy...','..yywwyyyywwyy..',
+  '..yywpyyyywpyy..','.yyyyyyyyyyyyyy.','.yyyyymmmmyyyyy.','.yyyyyyyyyyyyyy.','.dyyyyyyyyyyyyd.','..dddddddddddd..','................','................']},
+ worm:{pal:{g:'#b46cff',l:'#e0b0ff',e:'#ffffff',p:'#1a0a2e',r:'#ff5d7a'},rows:[
+  '................','...........ggg..','..........glllg.','.........glepeg.','.........gllllg.','..........gggrr.','..ggg.....gg....','.g...g...g..g...',
+  '.g...g..g....g..','..gggggg.....g..','........ggggg...','................','.ggg............','g...g...........','g...g...........','.ggg............']},
+ boss2:{pal:{c:'#5ee6f0',v:'#120a2e',V:'#2a1660',r:'#ffd34d',m:'#ff4d6d',w:'#7b5cc0'},rows:null},
+ boss:{pal:{c:'#ffd34d',v:'#3a1f6a',V:'#6b48a8',r:'#ff4d6d',m:'#1a0a2e',w:'#c9b8ef'},rows:[
+  '.....c.c.c......','.....ccccc......','...vvvvvvvvv....','..vVVVVVVVVVv...','.vVVwVVVVVVVVv..','vVVrrVVVVrrVVVv.','vVVrrVVVVrrVVVv.','vVVVVVVVVVVVVVv.',
+  'vVVVVmmmmmVVVVv.','.vVVVVVVVVVVVv..','..vvVVvvVVvvvv..','...v..v...v.....','................','................','................','................']},
+};
+SPR.boss2.rows=SPR.boss.rows;
+function drawSpr(name,ox,oy,s){const sp=SPR[name];sp.rows.forEach((row,j)=>{for(let i=0;i<16;i++){const ch=row[i];if(!ch||ch==='.')continue;P(ox+i*s,oy+j*s,s,s,sp.pal[ch])}})}
+const DIG={1:['010','110','010','010','111'],2:['111','001','111','100','111'],3:['111','001','111','001','111'],4:['101','101','111','001','001'],5:['111','100','111','001','111'],6:['111','100','111','101','111'],7:['111','001','001','010','010'],8:['111','101','111','101','111']};
+function drawDigit(n,x,y,col){DIG[n].forEach((r,j)=>{for(let i=0;i<3;i++)if(r[i]==='1')P(x+i,y+j,1,1,col)})}
+
+
+/* ---------------- audio (Web Audio, all synthesized) ---------------- */
+const AU={ctx:null,on:true,sfx:null,mus:null,track:null,step:0,next:0};
+try{AU.on=localStorage.getItem('harras-sound')!=='off'}catch(e){}
+function auInit(){
+ if(AU.ctx){if(AU.ctx.state!=='running')AU.ctx.resume().catch(()=>{});return}
+ try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AU.ctx=new C();
+  const m=AU.ctx.createGain();m.gain.value=AU.on?1:0;m.connect(AU.ctx.destination);AU.master=m;
+  AU.sfx=AU.ctx.createGain();AU.sfx.gain.value=.55;AU.sfx.connect(m);
+  AU.mus=AU.ctx.createGain();AU.mus.gain.value=.28;AU.mus.connect(m);
+  setInterval(schedule,25);
+ }catch(e){AU.ctx=null}
+}
+function tone(f,dur,o={}){const A=AU.ctx;if(!A||!AU.on)return;const t=A.currentTime+(o.t0||0)+(o.at||0);
+ const os=A.createOscillator(),g=A.createGain();os.type=o.type||'square';os.frequency.setValueAtTime(f,t);
+ if(o.slide)os.frequency.exponentialRampToValueAtTime(Math.max(30,f*o.slide),t+dur);
+ const v=o.vol??.15;g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+ os.connect(g);g.connect(o.dest||AU.sfx);os.start(t);os.stop(t+dur+.03)}
+let noiseBuf=null;
+function noise(dur,vol,o={}){const A=AU.ctx;if(!A||!AU.on)return;const t=A.currentTime+(o.t0||0)+(o.at||0);
+ if(!noiseBuf){noiseBuf=A.createBuffer(1,A.sampleRate*.5,A.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+ const src=A.createBufferSource();src.buffer=noiseBuf;const f=A.createBiquadFilter();f.type='highpass';f.frequency.value=o.hp||1200;const g=A.createGain();
+ g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);src.connect(f);f.connect(g);g.connect(o.dest||AU.sfx);src.start(t);src.stop(t+dur+.02)}
+const SFX={
+ blip:()=>tone(1300+Math.random()*300,.025,{vol:.035}),
+ ok:()=>tone(988,.05,{vol:.08,type:'triangle'}),
+ tap:()=>tone(720,.04,{vol:.08,type:'triangle'}),
+ right:()=>[784,988,1175,1568].forEach((f,i)=>tone(f,.11,{t0:i*.065,vol:.1})),
+ wrong:()=>{tone(196,.28,{type:'sawtooth',vol:.1,slide:.55});tone(207,.28,{type:'square',vol:.05,slide:.55})},
+ hit:()=>{noise(.12,.22,{hp:2500});tone(880,.14,{slide:.3,vol:.12})},
+ hurt:()=>{noise(.22,.2,{hp:400});tone(150,.3,{type:'sawtooth',slide:.5,vol:.14})},
+ card:()=>[1319,1760,2093,2637].forEach((f,i)=>tone(f,.14,{t0:i*.05,vol:.06,type:'triangle'})),
+ door:()=>{tone(220,.32,{type:'triangle',slide:4,vol:.12});noise(.3,.05,{hp:3000})},
+ enc:()=>[293,587,311,622,370,740].forEach((f,i)=>tone(f,.07,{t0:i*.05,vol:.1,type:'sawtooth'})),
+ fanfare:()=>[[587,0],[740,.12],[880,.24],[1175,.36],[880,.6],[1175,.72]].forEach(([f,t0],i)=>{tone(f,i>4?.5:.16,{t0,vol:.12});tone(f/2,i>4?.5:.16,{t0,vol:.06,type:'triangle'})}),
+ launch:()=>{noise(.9,.16,{hp:300});tone(90,1,{type:'sawtooth',slide:8,vol:.08})},
+ open:()=>[523,659].forEach((f,i)=>tone(f,.06,{t0:i*.05,vol:.07,type:'triangle'})),
+};
+/* Hijaz on D: D Eb F# G A Bb C — an Arabic scale played on chip-tune voices */
+const N={D2:73.42,A1:55,G2:98,A2:110,Bb2:116.54,C3:130.81,D3:146.83,D4:293.66,Eb4:311.13,'F#4':369.99,G4:392,A4:440,Bb4:466.16,C5:523.25,D5:587.33,Eb5:622.25,'F#5':739.99,G5:783.99,A5:880};
+const TRACKS={
+ world:{bpm:96,lead:['D5',0,'A4',0,'Bb4',0,'A4','G4','F#4',0,'G4',0,'A4',0,0,0,'D5',0,'C5',0,'Bb4',0,'A4','G4','A4',0,'F#4',0,'D4',0,0,0],
+  arp:['D4','A4','D5','A4'],bass:{0:'D2',6:'D2',8:'D3',12:'G2',16:'D2',22:'D2',24:'A1',28:'A2'},hat:[2,6,10,14,18,22,26,30],lv:.07},
+ battle:{bpm:150,lead:['D5','D5','Eb5',0,'D5',0,'C5','Bb4','A4',0,'Bb4',0,'A4','G4','F#4',0,'G4','A4','Bb4',0,'A4',0,'G4','F#4','Eb4',0,'F#4',0,'D4',0,'D4',0],
+  arp:['D4','F#4','A4','D5'],bass:{0:'D2',2:'D2',4:'D3',6:'D2',8:'D2',10:'D3',12:'C3',14:'D3',16:'Bb2',18:'Bb2',20:'D3',22:'Bb2',24:'A1',26:'A1',28:'A2',30:'A1'},hat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30],lv:.08},
+ ending:{bpm:84,lead:['D5',0,0,'F#5','A5',0,'G5','F#5','Eb5',0,'D5',0,0,0,0,0,'A4',0,'Bb4',0,'C5',0,'Bb4','A4','D5',0,0,0,0,0,0,0],
+  arp:['D4','F#4','A4','D5'],bass:{0:'D2',8:'G2',16:'A2',24:'D2'},hat:[4,12,20,28],lv:.07},
+};
+function playMusic(name){if(AU.track===name)return;AU.track=name;AU.step=0;if(AU.ctx)AU.next=AU.ctx.currentTime+.08}
+function schedule(){const A=AU.ctx;if(!A||!AU.track||!AU.on)return;const tr=TRACKS[AU.track];const sd=60/tr.bpm/4;
+ if(AU.next<A.currentTime-.2)AU.next=A.currentTime+.05;
+ while(AU.next<A.currentTime+.12){const st=AU.step%32,at=AU.next-A.currentTime;
+  const L=tr.lead[st];if(L)tone(N[L],sd*1.8,{at,vol:tr.lv,type:'square',dest:AU.mus});
+  if(st%2===0)tone(N[tr.arp[(st/2)%4]]*2,sd*.7,{at,vol:.025,type:'triangle',dest:AU.mus});
+  const B=tr.bass[st];if(B)tone(N[B],sd*3,{at,vol:.16,type:'triangle',dest:AU.mus});
+  if(tr.hat.includes(st))noise(.03,.05,{at,hp:7000,dest:AU.mus});
+  AU.step++;AU.next+=sd}}
+function setSound(on){AU.on=on;try{localStorage.setItem('harras-sound',on?'on':'off')}catch(e){}
+ $('#sndBtn').setAttribute('aria-pressed',on);$('#sndBtn').setAttribute('aria-label',on?'كتم الصوت':'تشغيل الصوت');
+ if(AU.master)AU.master.gain.setValueAtTime(on?1:0,AU.ctx.currentTime);if(on&&AU.ctx)AU.next=AU.ctx.currentTime+.05}
+addEventListener('pointerdown',auInit,true);addEventListener('keydown',auInit,true);
+document.addEventListener('visibilitychange',()=>{if(!AU.ctx)return;document.hidden?AU.ctx.suspend().catch(()=>{}):AU.on&&AU.ctx.resume().catch(()=>{})});
+
+/* ---------------- maps ---------------- */
+const SOLID=new Set('~fMTPRWDFKGLSXY#tE'.split(''));
+function genWorld(){
+ const W=34,H=28,m=[];let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+ for(let y=0;y<H;y++){m.push(Array(W).fill('.'))}
+ const set=(x,y,v)=>{if(x>=0&&y>=0&&x<W&&y<H)m[y][x]=v};
+ const rect=(x0,y0,x1,y1,v)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)set(x,y,v)};
+ rect(0,0,W-1,2,'~');rect(0,3,W-1,3,'b');rect(0,25,W-1,27,'M');
+ for(let y=4;y<25;y++){set(0,y,'M');set(W-1,y,'M')}
+ rect(3,10,13,10,',');rect(3,12,13,12,',');rect(20,10,30,10,',');rect(20,12,30,12,',');
+ rect(3,11,13,11,'f');rect(20,11,30,11,'f');
+ rect(2,14,31,14,'=');rect(16,4,17,24,'=');rect(2,8,30,8,'=');rect(2,20,22,20,'=');rect(17,23,31,23,'=');
+ rect(12,12,21,16,'=');
+ const blds=[];
+ const bld=(x,y,dist)=>{rect(x,y,x+4,y+1,'R');rect(x,y+2,x+4,y+2,'W');set(x+2,y+2,'D');blds.push({x,y,w:5,h:3,dx:x+2,dy:y+2,dist})};
+ bld(2,5,1);bld(8,5,2);bld(19,5,3);bld(25,5,4);bld(2,17,6);bld(8,17,7);bld(18,17,8);
+ rect(23,17,31,20,'F');rect(23,21,31,22,'K');set(27,22,'G');blds.push({x:23,y:17,w:9,h:6,dx:27,dy:22,dist:5,fort:1});
+ set(7,18,'Y');set(19,12,'X');set(20,12,'X');set(13,12,'S');
+ [[4,13],[8,13],[23,13],[27,13],[30,13],[4,15],[8,15],[23,15],[27,15],[30,15]].forEach(([x,y])=>set(x,y,'L'));
+ const reserved=new Set(['14,15','16,15','7,21','11,21','24,9','29,23','15,15','16,16']);
+ for(let i=0;i<260;i++){const x=1+(rnd()*32|0),y=4+(rnd()*21|0);const v=m[y][x];if(reserved.has(x+','+y))continue;
+  if(v==='.'&&rnd()<.22)set(x,y,'T');else if(v===','&&rnd()<.35)set(x,y,'P')}
+ return {w:W,h:H,t:m,kind:'world',blds};
+}
+const FORT_ROWS=['#############','#t.........t#','#...........#','#...........#','#####.#######','#t..........#','#..........t#','#######.#####','#t..........#','#...........#','###.#########','#t..........#','#...........#','#...........#','######E######'];
+const MAPS={world:genWorld(),fort:{w:13,h:15,t:FORT_ROWS.map(r=>r.split('')),kind:'fort',blds:[]}};
+const tileAt=(M,x,y)=>(x<0||y<0||x>=M.w||y>=M.h)?'#':M.t[y][x];
+
+/* ---------------- NPCs & enemies ---------------- */
+const NPCS=[
+ {id:'grandpa',map:'world',x:14,y:15,dir:'down',L:'grandpa',name:'الجد سعيد',talk:async()=>{
+   await say([{w:'الجد سعيد',t:`هلا يا ${S.name}! أذكر يوم بدأ البرنامج الوطني للاقتصاد الرقمي في يوليو 2021.`}]);award('c1');
+   await say([{w:'الجد سعيد',t:'الخطة طويلة مثل الفلج: أربع مراحل، كل وحدة خمس سنين، لين نوصل 2040.'},{w:'الجد سعيد',t:'إحنا الحين في بداية الطريق. روح الحصن جنوب شرق المدينة، الضباب هناك أخطر شي.'}]);award('c2');}},
+ {id:'yousef',map:'world',x:7,y:21,dir:'up',L:'yousef',name:'يوسف',talk:async()=>{
+   await say([{w:'يوسف',t:'شفت الصاروخ؟ في المرحلة الأولى انطلق أول صاروخ فضائي عُماني، وانطلق القمر الاصطناعي عُمان سات-1!'},{w:'يوسف',t:'وفيه 400 موظف يشتغلون في قطاع الفضاء. لما أكبر بصير واحد منهم.'}]);award('c5');
+   await say([{w:'يوسف',t:S.freed.includes(6)?'صاروخنا وصل المدار! أحلى يوم في حياتي.':'منصة الانطلاق هي المبنى رقم 6 جنبي. تعال نطلق الصاروخ مع بعض!'}]);}},
+ {id:'maryam',map:'world',x:11,y:21,dir:'up',L:'maryam',name:'مريم',talk:async()=>{
+   await say([{w:'مريم',t:'أنا أسوّي حلوى عُمانية، وأبي أفتح متجر أونلاين. تعرف إن فيه 200 شركة ناشئة عبر منصة عُمان للشركات الناشئة؟'},{w:'مريم',t:'وفيه تمويل تجاوز 127 مليون ريال عُماني لدعم الشركات التقنية الناشئة!'}]);award('c6');
+   await say([{w:'مريم',t:S.freed.includes(7)?'متجري صار موثّق والطلبات ما توقف. شكراً لك!':'الناس ما بتشتري أونلاين إذا ما حسّت بالأمان. ساعدني في متجري، المبنى رقم 7.'}]);}},
+ {id:'amal',map:'world',x:24,y:9,dir:'down',L:'amal',name:'المهندسة أمل',talk:async()=>{
+   await say([{w:'المهندسة أمل',t:'أنا مهندسة شبكات. في 2025 كان 69% من الوظائف الفنية والتخصصية والقيادية في قطاع تقنية المعلومات بيد عُمانيين.'}]);award('c7');
+   await say([{w:'المهندسة أمل',t:S.freed.includes(4)?'القرى كلها وصلها الإنترنت السريع. عمل عظيم!':'حارة الألياف هي المبنى رقم 4 ورا ظهري. ادخل ونمد الكابلات مع بعض.'}]);}},
+ {id:'guard',map:'world',x:29,y:23,dir:'left',L:'guard',name:'حارس الحصن',talk:async()=>{
+   if(S.freed.includes(5)){await say([{w:'حارس الحصن',t:`الحصن آمن بفضلك يا ${S.name}. الحين الناس تثق بالخدمات الرقمية.`}]);return}
+   await say([{w:'حارس الحصن',t:'هذا حصن الأمان، يحمي كل شي رقمي في المدينة. تدري إن عُمان جات في الفئة الأولى عالمياً في مؤشر الجاهزية للأمن السيبراني 2024؟'}]);award('c8');
+   await say([{w:'حارس الحصن',t:'بس ملك الضباب احتل الحصن ونشر وحوشه. سلاحك الوحيد: الجواب الصحيح. البوابة جنبي، ادخل إذا أنت جاهز.'}]);}},
+ {id:'sara',map:'fort',x:10,y:12,dir:'left',L:'sara',name:'المهندسة سارة',talk:async()=>{
+   await say([{w:'المهندسة سارة',t:'الحمد لله إنك وصلت! أنا سارة، مهندسة أمن سيبراني. الوحوش سدّت الممرات.'},{w:'المهندسة سارة',t:'كل وحش ينهزم بالمعرفة. وتذكّر: الاقتصاد الرقمي يقوم على أربعة مرتكزات.'}]);award('c9');
+   await say([{w:'المهندسة سارة',t:'إذا خلصت قلوبك في المعركة، معين يرجعك تحاول من جديد. ما فيه خسارة لمن يتعلم.'}]);}},
+];
+const FOES=[{id:'e1',type:'phish',x:3,y:10},{id:'e2',type:'slime',x:7,y:7},{id:'e3',type:'worm',x:5,y:4},{id:'boss',type:'boss',x:6,y:2}];
+
+/* ---------------- player ---------------- */
+const pl={x:16,y:15,fx:16,fy:15,tx:16,ty:15,dir:'down',moving:false,prog:0,walk:0};
+const moe={x:16*T,y:16*T,trail:[]};
+let cur='world';
+function placePlayer(map,x,y,dir){cur=map;Object.assign(pl,{x,y,fx:x,fy:y,tx:x,ty:y,dir,moving:false,prog:0});
+ const bx=x-(dir==='left'?-1:dir==='right'?1:0), by=y-(dir==='up'?-1:dir==='down'?1:0);
+ moe.trail=[[bx,by]];moe.x=bx*T;moe.y=by*T;S.map=map;S.x=x;S.y=y;S.dir=dir}
+const npcAt=(x,y)=>NPCS.find(n=>n.map===cur&&n.x===x&&n.y===y);
+const foeAt=(x,y)=>cur==='fort'?FOES.find(f=>f.x===x&&f.y===y&&!S.beaten.includes(f.id)):null;
+const DV={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+
+/* ---------------- input ---------------- */
+let mode='title', dirStack=[], needRelease=false;
+function press(d){if(!dirStack.includes(d))dirStack.push(d)}
+function release(d){dirStack=dirStack.filter(x=>x!==d)}
+function heldDir(){if(!dirStack.length){needRelease=false;return null}return needRelease?null:dirStack[dirStack.length-1]}
+const KEYMAP={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+addEventListener('keydown',e=>{
+ if(e.target.tagName==='INPUT')return;
+ if(KEYMAP[e.key]){e.preventDefault();press(KEYMAP[e.key]);return}
+ if(e.key===' '||e.key==='Enter'||e.key==='z'){e.preventDefault();if(!e.repeat)pressA();return}
+ if(mode==='battle'&&['1','2','3'].includes(e.key)){const b=$('#bOpts').querySelectorAll('.opt:not([hidden])')[+e.key-1];if(b&&!b.disabled)b.click()}
+ if(e.key==='Escape'||e.key==='m'){if(mode==='menu')closeMenu();else if(mode==='map')openMenu()}
+});
+addEventListener('keyup',e=>{if(KEYMAP[e.key])release(KEYMAP[e.key])});
+addEventListener('blur',()=>{dirStack=[]});
+document.querySelectorAll('.dpad button').forEach(b=>{
+ const d=b.dataset.d;
+ b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);press(d);b.classList.add('held')});
+ const up=()=>{release(d);b.classList.remove('held')};
+ b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('lostpointercapture',up);
+ b.addEventListener('contextmenu',e=>e.preventDefault());
+});
+const bA=$('#bA');
+bA.addEventListener('pointerdown',e=>{e.preventDefault();bA.classList.add('held');pressA()});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>bA.addEventListener(ev,()=>bA.classList.remove('held')));
+$('#dlg').addEventListener('pointerdown',e=>{e.preventDefault();advance()});
+$('#bBox').addEventListener('pointerdown',e=>{e.preventDefault();advance()});
+
+/* ---------------- text / dialog ---------------- */
+let typing=false, typeTimer=null, typeFull=null, waiter=null;
+function typeText(el,text){return new Promise(res=>{clearInterval(typeTimer);let i=0;typing=true;el.textContent='';
+ typeFull=()=>{clearInterval(typeTimer);el.textContent=text;typing=false;res()};
+ if(PR.speed==='instant'||matchMedia('(prefers-reduced-motion: reduce)').matches){typeFull();return}
+ const stepN=PR.speed==='fast'?3:1;
+ typeTimer=setInterval(()=>{i+=stepN;el.textContent=text.slice(0,i);if(i%3===1&&text[i-1]!==' ')SFX.blip();if(i>=text.length)typeFull()},24)})}
+const waitTap=()=>new Promise(r=>waiter=r);
+function advance(){if(typing){typeFull();return}if(waiter){const w=waiter;waiter=null;SFX.ok();w()}}
+function pressA(){if(typing||waiter){advance();return}if(mode==='map')interact()}
+async function say(lines){
+ const prev=mode;mode='dialog';const dlg=$('#dlg');dlg.hidden=false;
+ for(const l of lines){$('#dName').textContent=l.w||'';$('#dName').hidden=!l.w;dlg.classList.toggle('sys',!!l.sys);speak(l.t);await typeText($('#dText'),l.t);await waitTap()}hush();
+ dlg.hidden=true;mode=prev==='dialog'?'map':prev;needRelease=true;
+}
+let toastT;
+function award(id){if(S.cards.includes(id))return false;S.cards.push(id);save();SFX.card();const cd=CARDS.find(x=>x.id===id);
+ const t=$('#toast');t.innerHTML='';t.append('بطاقة معرفة جديدة: ');const sp=document.createElement('span');sp.textContent=cd.t;t.append(sp);
+ t.hidden=false;t.style.animation='none';t.offsetHeight;t.style.animation='';clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600);return true}
+const fadeEl=$('#fade');
+async function fade(fn){SFX.door();fadeEl.classList.add('on');await new Promise(r=>setTimeout(r,300));fn();await new Promise(r=>setTimeout(r,120));fadeEl.classList.remove('on');await new Promise(r=>setTimeout(r,250))}
+
+/* ---------------- HUD ---------------- */
+function renderMeter(el,level){el.innerHTML='';for(let i=0;i<10;i++){const d=document.createElement('i');d.className='dia'+(i<2?' base':i<level?' on':'');el.append(d)}}
+function hud(){const lv=2+S.freed.length;$('#mVal').textContent=lv+'%';renderMeter($('#mDia'),lv);
+ let q;
+ const ch=curChapter(),rem=ch.d.filter(x=>!S.freed.includes(x));
+ if(S.finalWon)q='2040: وصلنا 10%! أنت حارس الوادي الرقمي';
+ else if(S.freed.length===8)q='المواجهة الأخيرة: اضغط A عند برج البيانات في الساحة';
+ else if(cur==='fort'&&!S.freed.includes(5))q=`اهزم وحوش الضباب ووصل إلى ملك الضباب (${S.beaten.length}/4)`;
+ else if(cur==='fort')q='الحصن آمن. اطلع من البوابة تحت';
+ else if(S.freed.length)q=`الفصل ${ch.n} (${ch.years}): حرّر ${andList(rem.map(x=>DISTRICTS[x-1].place+' '+x))}`;
+ else if(cur==='fort')q=`اهزم وحوش الضباب ووصل إلى ملك الضباب (${S.beaten.length}/4)`;
+ else q='الفصل 1 (2021–2025): اذهب إلى حصن الأمان في جنوب شرق المدينة';
+ $('#quest').textContent=q}
+
+/* ---------------- world logic ---------------- */
+function tryMove(d){
+ const M=MAPS[cur],[dx,dy]=DV[d],nx=pl.x+dx,ny=pl.y+dy,tl=tileAt(M,nx,ny);
+ const foe=foeAt(nx,ny);if(foe){fight(foe);return}
+ if(tl==='D'||tl==='G'){if(d==='up')door(nx,ny);return}
+ if(tl==='E'){if(d==='down')exitFort();return}
+ if(SOLID.has(tl)||npcAt(nx,ny))return;
+ moe.trail.push([pl.x,pl.y]);if(moe.trail.length>2)moe.trail.shift();
+ pl.fx=pl.x;pl.fy=pl.y;pl.tx=nx;pl.ty=ny;pl.moving=true;pl.prog=0;
+}
+async function interact(){
+ const M=MAPS[cur],[dx,dy]=DV[pl.dir],nx=pl.x+dx,ny=pl.y+dy,tl=tileAt(M,nx,ny);
+ const n=npcAt(nx,ny);
+ if(n){const back={up:'down',down:'up',left:'right',right:'left'};const od=n.dir;n.dir=back[pl.dir];await n.talk();n.dir=od;save();hud();return}
+ const foe=foeAt(nx,ny);if(foe){fight(foe);return}
+ if(tl==='D'||tl==='G'){door(nx,ny);return}
+ if(tl==='E'){exitFort();return}
+ if(tl==='S'){await say([{w:'لوحة الساحة',t:'محاور البرنامج الثلاثة: المجتمع الرقمي، والحكومة الرقمية، والقطاعات والأعمال الرقمية.',sys:1},{w:'لوحة الساحة',t:'ولتحقيقها 8 برامج تنفيذية، لكل برنامج حارة في مدينتنا.',sys:1}]);award('c10');return}
+ if(tl==='X'&&S.freed.length===8&&!S.finalWon){await finalBattle();return}
+ if(tl==='X'){const lv=2+S.freed.length;await say([{w:'برج البيانات',t:`مساهمة الاقتصاد الرقمي في المدينة الآن: ${lv}%. الهدف: 10% بحلول 2040.`,sys:1},{w:'معين',t:'كل حارة نحررها ترفع العداد 1%. ثماني حارات + 2% = 10%!'}]);return}
+ if(tl==='Y'){await say([{w:'معين',t:'صاروخ بألوان علم عُمان! منصة الانطلاق بتنفتح لما نحرر حارة الفضاء.'}]);return}
+}
+async function door(x,y){
+ const b=MAPS.world.blds.find(b=>b.dx===x&&b.dy===y);if(!b)return;
+ const d=DISTRICTS[b.dist-1];
+ if(b.fort){
+  await fade(()=>{placePlayer('fort',6,13,'up');hud()});save();
+  if(!S.fortSeen){S.fortSeen=true;save();await say([{w:'معين',t:'الجو هنا مليان ضباب... شايف الوحوش؟ كل واحد يسد ممر.'},{w:'معين',t:'امشِ لين الوحش أو اضغط A قدامه عشان تبدأ المعركة. وكلّم المهندسة سارة يمين المدخل.'}])}
+  return}
+ if(!isOpen(d.id)){const ch=chapterOf(d.id);await say([{w:'معين',t:`هذي ${d.place}، حارة برنامج ${d.prog}. الضباب قافلها لين الفصل ${ch.n} (${ch.years}).`},{w:'معين',t:`خلّنا نخلّص الفصل الحالي أول: ${andList(curChapter().d.filter(x=>!S.freed.includes(x)).map(x=>DISTRICTS[x-1].place))}.`}]);return}
+ if(S.freed.includes(d.id)){await say([{w:d.host,t:`${d.place} محرّرة بفضلك يا ${S.name}! تعال نتدرّب مرة ثانية.`}]);const ok=await runMini(d.id);if(ok)await say([{w:d.host,t:'تدريب ممتاز! ما نسيت شي.'}]);return}
+ await say(d.intro.map(t=>({w:d.host,t})));
+ const ok=await runMini(d.id);
+ if(ok){await freeDistrict(d.id);mode='map';hud();save();await afterFree(d.id)}
+ else await say([{w:'معين',t:'ولا يهمك، ترجع وقت ما تبي. الحارة تنتظرك.'}]);
+}
+async function exitFort(){await fade(()=>{placePlayer('world',27,23,'down');hud()});save()}
+async function fight(foe){
+ const r=await battle(foe.type);
+ if(r==='win'){S.beaten.push(foe.id);save();hud();if(foe.id==='boss')await freeFort()}
+}
+async function freeFort(){
+ await freeDistrict(5);
+ await fade(()=>{placePlayer('world',27,23,'down');hud()});mode='map';save();
+ await afterFree(5);
+}
+async function freeDistrict(id){
+ const d=DISTRICTS[id-1];mode='reward';const before=2+S.freed.length;
+ if(!S.freed.includes(id))S.freed.push(id);d.pil.forEach(k=>S.pillars[k]=Math.min(5,S.pillars[k]+1));award(d.card);save();
+ const cd=CARDS.find(c=>c.id===d.card);
+ $('#rNum').textContent=id;$('#rTitle').textContent=`تحرّرت ${d.place}!`;
+ const L=$('#rList');L.innerHTML='';
+ d.pil.forEach(k=>{const r=el('div');r.append(el('span',null,'+1'),pillarName(k));L.append(r)});
+ [['وسام',d.badge],['بطاقة',cd.t]].forEach(([a,b])=>{const r=el('div');r.append(el('span',null,a),b);L.append(r)});
+ SFX.fanfare();const scr=$('#reward');scr.hidden=false;renderMeter($('#rDia'),before);$('#rPct').textContent=before+'%';
+ setTimeout(()=>{renderMeter($('#rDia'),before+1);$('#rPct').textContent=(before+1)+'%'},700);
+ await new Promise(r=>{$('#rGo').onclick=r});scr.hidden=true;hud();
+}
+async function afterFree(id){
+ const lv=2+S.freed.length,ch=chapterOf(id),rem=ch.d.filter(x=>!S.freed.includes(x));
+ await say([{w:'معين',t:`أحسنت يا ${S.name}! الضباب انقشع عن ${DISTRICTS[id-1].place}، والعداد صار ${lv}%.`}]);
+ if(rem.length){await say([{w:'معين',t:`باقي في الفصل ${ch.n}: ${andList(rem.map(x=>`${DISTRICTS[x-1].place} (رقم ${x})`))}.`}]);hud();return}
+ if(S.freed.length===8){await say([{w:'معين',t:'وصلنا 10%!! الحارات الثماني كلها محرّرة.'},{w:'معين',t:'بس أحس بضباب غريب عند برج البيانات في الساحة... روح له واضغط A. هذي المواجهة الأخيرة!'}]);hud();return}
+ await chapterCard(curChapter());
+}
+function chapterCard(ch){return new Promise(res=>{const prev=mode;mode='reward';const scr=$('#chap');
+ $('#chN').textContent='الفصل '+ch.n;$('#chY').textContent=ch.years;$('#chT').textContent=ch.title;$('#chS').textContent=ch.story;
+ const tl=$('#chTL');tl.innerHTML='';CHAPTERS.forEach(c2=>{const s2=el('span',c2.n<ch.n?'done':c2.n===ch.n?'now':'',c2.years.split('–')[0]);tl.append(s2)});
+ const dl=$('#chD');dl.innerHTML='';ch.d.forEach(x=>{const d=DISTRICTS[x-1];const r=el('div','dist'+(S.freed.includes(x)?' free':''));const n=el('span','n');n.append(el('b',null,x));
+  const tx=el('div');tx.append(el('h4',null,d.place),el('p',null,'برنامج '+d.prog));r.append(n,tx);dl.append(r)});
+ SFX.fanfare();scr.hidden=false;$('#chGo').onclick=()=>{scr.hidden=true;mode=prev==='reward'?'map':prev;needRelease=true;hud();res()}})}
+async function finalBattle(){
+ await say([{w:'ملك الضباب الأكبر',t:'أخيراً جيت! تبي توصل 2040؟ لازم تتذكر كل شي تعلمته في الفصول الأربعة!'}]);
+ const r=await battle('final');
+ if(r!=='win'){await say([{w:'معين',t:'قريب! راجع بطاقات المعرفة في الحقيبة، وارجع للبرج وقت ما تبي.'}]);return}
+ S.finalWon=true;S.pts+=50;save();hud();
+ mode='reward';const scr=$('#ending');
+ $('#enStats').innerHTML='';[[`${S.cards.length}/${CARDS.length}`,'بطاقة معرفة'],[S.freed.length,'حارات محرّرة'],[S.pts,'نقطة معرفة']].forEach(([a,b])=>{const d=el('div');d.append(el('b',null,a),el('span',null,b));$('#enStats').append(d)});
+ renderMeter($('#enDia'),10);scr.hidden=false;playMusic('ending');SFX.fanfare();
+ await new Promise(r2=>{$('#enGo').onclick=r2});scr.hidden=true;mode='map';needRelease=true;
+ await say([{w:'الجد سعيد',t:`من يوليو 2021 لين 2040... الطريق كان طويل، بس جيل مثلك يا ${S.name} هو اللي وصّلنا. الله يحفظك.`},{w:'معين',t:'لقبك الجديد: «حارس الوادي الرقمي». تقدر تتمشى في المدينة، وتتدرّب في أي حارة، وتراجع بطاقاتك في الحقيبة.'}]);
+}
+
+/* ---------------- mini-games ---------------- */
+const mnHelp=t=>{$('#mnHelp').textContent=t;speak(t)};
+const mnStat=(t,k)=>{if(k==='ok')SFX.right();else if(k==='bad')SFX.wrong();const s=$('#mnStatus');s.textContent=t;s.className='mn-status '+(k||'')};
+function runMini(id){return new Promise(res=>{const d=DISTRICTS[id-1];mode='mini';const scr=$('#mini');scr.hidden=false;scr.scrollTop=0;
+ $('#mnNum').textContent=id;$('#mnProg').textContent='برنامج '+d.prog;$('#mnTitle').textContent=d.place;
+ const body=$('#mnBody');body.innerHTML='';mnStat('');mnHelp('');let done=false;
+ const finish=v=>{if(done)return;done=true;hush();stopLoop=true;scr.hidden=true;mode='map';needRelease=true;res(v)};
+ $('#mnExit').onclick=()=>finish(false);stopLoop=false;GAMES[id](body,finish)})}
+let stopLoop=false;
+function winPanel(body,finish,text){body.innerHTML='';mnHelp('');mnStat('');const c2=el('div','card');c2.append(el('p',null,text));c2.firstChild.style.cssText='margin:0 0 12px;font-weight:700;line-height:1.7;font-size:17px';
+ const b=el('button','btn','استلم الجائزة');b.style.width='100%';b.onclick=()=>finish(true);c2.append(b);body.append(c2)}
+function quizStep(body,q,next){body.innerHTML='';mnHelp('');mnStat('');const c2=el('div','card');c2.append(el('p',null,q.q));c2.firstChild.style.cssText='margin:0;font-weight:700;font-size:17px;line-height:1.7';body.append(c2);
+ const box=el('div','b-opts');body.append(box);const btns=[];
+ shuffle([0,1,2]).forEach(i=>{const b=el('button','opt',q.o[i]);btns.push(b);b.dataset.i=i;b.onclick=()=>{btns.forEach(x=>x.disabled=true);
+  const r=btns.find(x=>+x.dataset.i===q.a);r.classList.add('right');r.disabled=false;
+  if(i!==q.a){b.classList.add('wrong');b.disabled=false;mnStat('الجواب الصحيح بالأخضر. '+q.w,'bad')}else mnStat('صح! '+q.w,'ok');
+  const n=el('button','btn','تابع');n.onclick=next;body.append(n)};box.append(b)})}
+const GAMES={};
+
+GAMES[1]=(body,finish)=>{
+ const rounds=[{t:'رحلة طلب خدمة حكومية رقمية',s:['أدخل البوابة الموحدة للخدمات بهويتي الرقمية','أختار الخدمة التي أحتاجها','أعبّئ البيانات وأرفع المستندات','أدفع الرسوم إلكترونياً إن وُجدت','يصلني إشعار وأستلم الوثيقة رقمياً']},
+  {t:'رحلة مقترح عبر منصة «تجاوب»',s:['أفتح منصة تجاوب','أختار نوع الطلب: مقترح','أكتب فكرتي بوضوح','أرسل المقترح','أتابع الرد على مقترحي']}];
+ if(S.level==='easy')rounds.length=1;
+ let r=0;
+ const play=()=>{const R=rounds[r];let next=0;mnHelp(`الرحلة ${r+1} من ${rounds.length}: ${R.t}. اضغط الخطوات بالترتيب من الأول للأخير.`);mnStat('');body.innerHTML='';
+  const seq=el('ol','mn-seq'),pool=el('div','b-opts');body.append(seq,pool);
+  shuffle(R.s.map((t,i)=>({t,i}))).forEach(o=>{const b=el('button','opt',o.t);b.onclick=()=>{
+   if(o.i===next){next++;b.remove();seq.append(el('li',null,o.t));mnStat('صح!','ok');
+    if(next===R.s.length){r++;if(r<rounds.length){mnStat('أحسنت! الخدمة صارت أسرع وبدون طوابير.','ok');setTimeout(play,1100)}
+     else setTimeout(()=>winPanel(body,finish,'رتّبت رحلتين رقميتين! الحكومة الرقمية توفّر وقت الناس، وتسمع أفكارهم عبر منصة تجاوب.'),700)}}
+   else{b.classList.remove('shake');b.offsetWidth;b.classList.add('shake');mnStat('مو هذي الخطوة الحين. وش اللي يجي قبلها؟','bad')}};pool.append(b)})};
+ play()};
+
+GAMES[2]=(body,finish)=>{
+ const levels=[['1001','0110','0110','1001'],['1110','0010','0011','1110'],['1101','0101','0111','1100']];if(S.level==='easy')levels.length=2;if(S.level==='adv')levels.push(['1011','1101','0110','1011']);let lv=0;
+ const play=()=>{const tgt=levels[lv].join('');let cur=Array(16).fill(0);
+  mnHelp(`الدائرة ${lv+1} من ${levels.length}: اضغط المربعات عشان تنسخ التصميم الأصلي بالضبط.`);mnStat('');body.innerHTML='';
+  const wrap=el('div','chip-wrap');const a=el('div'),b=el('div');a.append(el('p','lbl','التصميم'));b.append(el('p','lbl','شريحتك'));
+  const tg=el('div','grid');tg.style.gridTemplateColumns='repeat(4,1fr)';[...tgt].forEach(v=>{const c3=el('span','cell'+(v==='1'?' on':''));tg.append(c3)});a.append(tg);
+  const pg=el('div','grid');pg.style.gridTemplateColumns='repeat(4,1fr)';
+  const check=()=>{const diff=[...tgt].filter((v,i)=>+v!==cur[i]).length;
+   if(!diff){mnStat('الدائرة تشتغل!','ok');pg.querySelectorAll('button').forEach(x=>x.disabled=true);lv++;
+    setTimeout(()=>lv<levels.length?play():winPanel(body,finish,'صمّمت ثلاث دوائر! الشرائح الإلكترونية صناعة تستثمر فيها عُمان، والمهندسون العُمانيون يقدرون يصنعونها.'),900)}
+   else mnStat(`باقي ${diff} ${diff===1?'مربع':'مربعات'} مختلفة`)};
+  for(let i=0;i<16;i++){const c3=el('button','cell');c3.setAttribute('aria-label','مربع '+(i+1));c3.onclick=()=>{cur[i]^=1;c3.classList.toggle('on',!!cur[i]);check()};pg.append(c3)}
+  b.append(pg);wrap.append(a,b);body.append(wrap)};
+ play()};
+
+GAMES[3]=(body,finish)=>{
+ const train=shuffle([['شوا',0],['عرسية',0],['هريس',0],['مضروبة',0],['نزوى',1],['صلالة',1],['صور',1],['مسندم',1]]);
+ const test=[['مشاكيك',0],['الدقم',1],['قبولي',0],['بهلاء',1]];const cats=['أكلة عُمانية','مكان في عُمان'];let k=0,mist=0;
+ const step=()=>{if(k>=train.length)return testMoe();const [w,cat]=train[k];
+  mnHelp(`مثال ${k+1} من ${train.length}: صنّف الكلمة عشان يتعلم معين.`);body.innerHTML='';
+  body.append(el('p','big-word',w));const two=el('div','two');
+  cats.forEach((cn,ci)=>{const b=el('button','opt',cn);b.onclick=()=>{if(ci===cat){mnStat('تمام، معين حفظها.','ok');k++;step()}
+   else{mist++;mnStat(`انتبه! «${w}» ${cats[cat]}. لو علّمنا معين معلومة غلط، بيتعلم غلط.`,'bad')}};two.append(b)});body.append(two)};
+ const testMoe=()=>{mnHelp('الحين معين يختبر نفسه على كلمات ما شافها قبل:');mnStat('');body.innerHTML='';const box=el('div','moe-test');body.append(box);
+  test.forEach(([w,c3],i)=>setTimeout(()=>{box.append(el('div',null,`معين: «${w}» = ${cats[c3]}`));
+   if(i===test.length-1)setTimeout(()=>{mnStat('معين جاوب 4 من 4 صح، لأنك علّمته ببيانات صحيحة!','ok');const n=el('button','btn','تابع');n.onclick=()=>quizStep(body,
+    {q:'هل نصدّق كل شي يقوله الذكاء الاصطناعي؟',o:['نعم، دائماً صح','نتحقق من المعلومات المهمة من مصادر موثوقة','ما نستخدمه أبداً'],a:1,w:'الذكاء الاصطناعي مساعد ذكي، لكنه يغلط أحياناً، فنتحقق من المهم.'},
+    ()=>winPanel(body,finish,'علّمت معين! الذكاء الاصطناعي يتعلم من البيانات، وكل ما كانت البيانات أصح كان أذكى.'));body.append(n)},500)},700*(i+1)))};
+ step()};
+
+GAMES[4]=(body,finish)=>{
+ const N=5,sol={},tgts=['4,0','4,2','4,4'];
+ Object.assign(sol,{'0,2':10,'1,2':10,'2,2':15,'3,2':10,'4,2':8,'2,1':5,'2,0':6,'3,0':10,'4,0':8,'2,3':5,'2,4':3,'3,4':10,'4,4':8});
+ const deco=[3,6,12,9,5,10];const rot=m=>((m<<1)|(m>>3))&15;const g4={};
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){const k=x+','+y;let m=sol[k]??deco[(x*3+y*5)%6];const r=(x*7+y*3+1)%4||(m===15?0:1);for(let i=0;i<r;i++)m=rot(m);g4[k]=m}
+ mnHelp('اضغط أي قطعة عشان تلفّها. وصّل الكابل من مركز البيانات (يسار) إلى القرى الثلاث بالإطار الذهبي.');
+ const legend=el('div','legend');legend.append(el('span',null,'مركز البيانات ←'),el('span',null,'القرى'));
+ const grid=el('div','grid');grid.style.gridTemplateColumns=`repeat(${N},1fr)`;body.append(legend,grid);const cells={};
+ const lit=()=>{const seen=new Set();const q=[];if(g4['0,2']&8){q.push([0,2]);seen.add('0,2')}
+  const D=[[1,0,-1],[2,1,0],[4,0,1],[8,-1,0]];
+  while(q.length){const [x,y]=q.shift();const m=g4[x+','+y];D.forEach(([b,dx,dy])=>{if(!(m&b))return;const nx=x+dx,ny=y+dy,nk=nx+','+ny;if(nx<0||ny<0||nx>=N||ny>=N||seen.has(nk))return;
+   const opp={1:4,2:8,4:1,8:2}[b];if(g4[nk]&opp){seen.add(nk);q.push([nx,ny])}})}return seen};
+ const svg=(m,on)=>{const col=on?'#5ee6f0':'#9b86cf';let s2='<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="4" fill="'+col+'"/>';
+  [[1,'20,20 20,0'],[2,'20,20 40,20'],[4,'20,20 20,40'],[8,'20,20 0,20']].forEach(([b,pt])=>{if(m&b)s2+=`<polyline points="${pt}" stroke="${col}" stroke-width="7" stroke-linecap="square"/>`});return s2+'</svg>'};
+ let won=false;
+ const draw=()=>{const L=lit();Object.entries(cells).forEach(([k,c3])=>{c3.innerHTML=svg(g4[k],L.has(k))});const n=tgts.filter(t=>L.has(t)).length;
+  if(n===3&&!won){won=true;mnStat('النور وصل القرى الثلاث!','ok');Object.values(cells).forEach(c3=>c3.disabled=true);
+   setTimeout(()=>winPanel(body,finish,'وصّلت الألياف البصرية للقرى! الحين الطلاب يدرسون، والتجار يبيعون، والناس يستخدمون الخدمات الرقمية من بيوتهم.'),1000)}
+  else if(!won)mnStat(`القرى المتصلة: ${n} من 3`)};
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){const k=x+','+y;const c3=el('button','cell'+(tgts.includes(k)?' tgt':''));if(k==='0,2')c3.style.borderLeft='5px solid #5ee6f0';c3.setAttribute('aria-label','قطعة كابل');
+  c3.onclick=()=>{g4[k]=rot(g4[k]);draw()};cells[k]=c3;grid.append(c3)}
+ draw()};
+
+function rocketCanvas(flame){const cv2=document.createElement('canvas');cv2.width=16;cv2.height=40;c=cv2.getContext('2d');
+ P(5,3,6,28,'#f4f1ea');P(10,3,1,28,'#cfc8d8');P(6,1,4,3,'#d9304a');P(7,0,2,1,'#d9304a');P(5,13,6,2,'#d9304a');P(5,16,6,2,'#2e9a4f');P(7,8,2,2,'#5ee6f0');P(3,25,2,6,'#d9304a');P(11,25,2,6,'#d9304a');
+ if(flame){P(6,31,4,4,'#f2c14e');P(7,35,2,4,'#ff8a3d')}return cv2}
+GAMES[6]=(body,finish)=>{
+ const stages=[['الإقلاع',38,30],['فصل المرحلة',52,22],['دخول المدار',60,15]];let st=0,pos=0,dirv=1,speed=55,running=true;
+ {const SP={easy:[1.5,40],mid:[1,55],adv:[.75,75]}[S.level]||[1,55];stages.forEach(s2=>{const w=s2[2]*SP[0];s2[1]=Math.max(2,Math.min(98-w,s2[1]-(w-s2[2])/2));s2[2]=w});speed=SP[1]}
+ mnHelp('اضغط «أطلق!» لما يكون المؤشر الذهبي داخل المنطقة الخضراء.');
+ const sky=el('div','sky');for(let i=0;i<30;i++){const s2=el('i');s2.style.left=(hash(i,1)*100)+'%';s2.style.top=(hash(i,2)*100)+'%';sky.append(s2)}
+ let rk=rocketCanvas(false);rk.style.bottom='6px';sky.append(rk);
+ const stg=el('div','stages');stages.forEach(s2=>stg.append(el('span',null,s2[0])));
+ const bar=el('div','bar'),zone=el('div','zone'),ndl=el('div','needle');bar.append(zone,ndl);
+ const go=el('button','btn','أطلق!');body.append(sky,stg,bar,go);
+ const setStage=()=>{[...stg.children].forEach((s2,i)=>s2.className=i<st?'done':i===st?'now':'');if(st<3){zone.style.left=stages[st][1]+'%';zone.style.width=stages[st][2]+'%'}};setStage();
+ let last2=performance.now();
+ const loop=now=>{if(stopLoop||!running)return;const dt=(now-last2)/1000;last2=now;pos+=dirv*speed*dt;if(pos>100){pos=100;dirv=-1}if(pos<0){pos=0;dirv=1}ndl.style.left=pos+'%';requestAnimationFrame(loop)};requestAnimationFrame(loop);
+ go.onclick=()=>{const [,a,w]=stages[st];if(pos>=a&&pos<=a+w){st++;speed+=25;SFX.launch();const nr=rocketCanvas(true);nr.style.bottom=rk.style.bottom;sky.replaceChild(nr,rk);rk=nr;requestAnimationFrame(()=>rk.style.bottom=(6+st*40)+'px');
+   setStage();
+   if(st===3){running=false;go.disabled=true;mnStat('وصلنا المدار! القمر الاصطناعي العُماني يدور حول الأرض.','ok');setTimeout(()=>winPanel(body,finish,'أطلقت الصاروخ لين المدار! الأقمار الاصطناعية تساعد في الاتصالات والخرائط ومراقبة الطقس.'),1300)}
+   else mnStat(`ممتاز! ${stages[st-1][0]} نجح. المرحلة الجاية أصعب.`,'ok')}
+  else{go.classList.remove('shake');go.offsetWidth;go.classList.add('shake');mnStat('فاتك التوقيت! جرّب مرة ثانية.','bad')}}};
+
+GAMES[7]=(body,finish)=>{
+ const P7=[['halwa','حلوى عُمانية'],['coffee','قهوة'],['dates','تمر'],['luban','لبان ظفاري']];
+ const orders=[['أم سالم من صحار',{halwa:2}],['علي من صلالة',{coffee:1,dates:2}],['زوينة من نزوى',{halwa:1,luban:2}],['فهد من مسقط',{dates:1,coffee:1,halwa:1}]];if(S.level==='easy')orders.length=3;if(S.level==='adv')orders.push(['سالم من البريمي',{luban:1,dates:2,coffee:2}]);let o=0;
+ const play=()=>{const [who,want]=orders[o];const bask={};mnHelp(`الطلب ${o+1} من ${orders.length}: اضغط المنتجات بالعدد المطلوب، وبعدها أرسل.`);mnStat('');body.innerHTML='';
+  const card=el('div','order');card.append(el('b',null,'طلب جديد من '+who));card.append(el('p',null,Object.entries(want).map(([k,n])=>`${n} × ${P7.find(x=>x[0]===k)[1]}`).join('، ')));
+  const grid=el('div','prods');const cnts={};
+  P7.forEach(([k,n])=>{const b=el('button','prod',n);const cn=el('span','cnt');b.append(cn);cnts[k]=cn;b.onclick=()=>{bask[k]=(bask[k]||0)+1;cn.textContent=bask[k]};grid.append(b)});
+  const row=el('div','row');const clr=el('button','btn ghost small','فضّي السلة');const snd=el('button','btn small','أرسل الطلب');row.append(clr,snd);
+  clr.onclick=()=>{for(const k in bask)delete bask[k];Object.values(cnts).forEach(x=>x.textContent='')};
+  snd.onclick=()=>{const ok=P7.every(([k])=>(bask[k]||0)===(want[k]||0));
+   if(ok){o++;mnStat('وصل الطلب! الزبون عطاك 5 نجوم.','ok');snd.disabled=true;setTimeout(()=>o<orders.length?play():quizStep(body,
+     {q:'زبون جديد يسأل: كيف أعرف إن متجرك حقيقي وموثوق؟',o:['أوثّق متجري في منصة معروف عُمان','أقول له: ثق فيني وبس','أطلب منه يرسل صورة بطاقته'],a:0,w:'التوثيق يعطي الزبائن ثقة، والثقة تكبّر التجارة الإلكترونية.'},
+     ()=>winPanel(body,finish,'جهّزت أربعة طلبات ووثّقت المتجر! مريم الحين تبيع حلوى عُمانية لكل المحافظات.')),900)}
+   else mnStat('الطلب ناقص أو زايد. راجع العدد وجرّب مرة ثانية.','bad')};
+  body.append(card,grid,row)};
+ play()};
+
+GAMES[8]=(body,finish)=>{
+ const R=[{it:'دفتر رسم',a:[3,1,'رسوم توصيل'],b:[3.5,0,'']},{it:'سماعة',a:[12,0,''],b:[10,2.5,'رسوم خدمة مخفية']},{it:'كرة قدم',a:[5,0,''],b:[4,0.5,'رسوم دفع']},{it:'اشتراك لعبة سنة كاملة',a:[1,0,'',12],b:[10,0,'']}];
+ if(S.level==='easy')R.length=3;if(S.level==='adv')R.push({it:'حقيبة مدرسية',a:[20,0,'',0,25],b:[16,1,'رسوم توصيل']},{it:'جوال جديد',a:[120,0,''],b:[10,5,'رسوم تفعيل',12]});
+ let r=0,score=0;const fmt=v=>(Math.round(v*1000)/1000).toString()+' ر.ع';
+ const total=o=>(o[3]?o[0]*o[3]:o[0]*(1-(o[4]||0)/100))+o[1];
+ const play=()=>{const q=R[r];mnHelp(`الجولة ${r+1} من ${R.length}: تبي تشتري «${q.it}». أي عرض أرخص في المجموع؟`);mnStat('');body.innerHTML='';
+  const two=el('div','two');const best=total(q.a)<total(q.b)?'a':'b';
+  ['a','b'].forEach(k=>{const o2=q[k];const b=el('button','offer');b.append(el('b',null,k==='a'?'العرض الأول':'العرض الثاني'),el('span','price',o2[3]?fmt(o2[0])+' شهرياً':fmt(o2[0])));
+   b.append(el('span','fee',[o2[3]?`لمدة ${o2[3]} شهر`:'',o2[4]?`خصم ${o2[4]}٪`:'',o2[1]?`+ ${fmt(o2[1])} ${o2[2]}`:''].filter(Boolean).join(' · ')||'بدون رسوم إضافية'));
+   b.onclick=()=>{two.querySelectorAll('.offer').forEach(x=>x.disabled=true);const ok=k===best;if(ok)score++;
+    two.children[best==='a'?0:1].classList.add('right');if(!ok)b.classList.add('wrong');
+    mnStat(`${ok?'صح!':'انتبه!'} المجموع: الأول ${fmt(total(q.a))}، الثاني ${fmt(total(q.b))}.`,ok?'ok':'bad');
+    const n=el('button','btn','التالي');n.onclick=()=>{r++;r<R.length?play():quizStep(body,
+     {q:'وش الطريقة الآمنة لما تدفع من جوالك؟',o:['أدفع من تطبيق رسمي وأتأكد من المبلغ قبل التأكيد','أعطي رمز التحقق للبائع','أرسل صورة بطاقتي في الدردشة'],a:0,w:'الدفع الرقمي سريع وآمن لما نستخدم تطبيقات رسمية ونراجع المبلغ.'},
+     ()=>winPanel(body,finish,`اخترت العرض الأذكى في ${score} من ${R.length} جولات! الدفع الرقمي يحتاج عين حاسبة: نقرأ الرسوم قبل ما نضغط «ادفع».`))};body.append(n)};two.append(b)});
+  body.append(two)};
+ play()};
+
+/* ---------------- battle ---------------- */
+function drawBattleFoe(type,alpha=1){const cv=$('#bCv'),x=cv.getContext('2d');c=x;x.clearRect(0,0,160,160);x.globalAlpha=alpha;drawSpr(ENEMIES[type].spr,0,0,10);
+ if(type==='slime'){x.fillStyle='#6a2a1a';x.font='800 20px Tajawal, sans-serif';x.textAlign='center';x.fillText('123456',80,114)}x.globalAlpha=1}
+function hpRow(el,n,max){el.innerHTML='';for(let i=0;i<max;i++){const d=document.createElement('i');d.className='dia'+(i<n?' on':'');el.append(d)}}
+async function bSay(t){speak(t);const box=$('#bBox');box.classList.remove('wait');$('#bOpts').innerHTML='';await typeText($('#bMsg'),t);box.classList.add('wait');await waitTap();box.classList.remove('wait')}
+function ask(q,help){return new Promise(res=>{
+ const box=$('#bOpts');box.innerHTML='';$('#bBox').classList.remove('wait');typeText($('#bMsg'),q.q);
+ const order=shuffle([0,1,2]);const btns=[];
+ order.forEach((oi,k)=>{const b=document.createElement('button');b.className='opt';b.innerHTML='<span class="k"></span><span></span>';b.firstChild.textContent=k+1;b.lastChild.textContent=q.o[oi];b.dataset.i=oi;
+  b.onclick=()=>{if(typing)typeFull();btns.forEach(x=>x.disabled=true);const ok=oi===q.a;b.classList.add(ok?'right':'wrong');b.disabled=false;if(!ok){const r=btns.find(x=>+x.dataset.i===q.a);r.classList.add('right');r.disabled=false}setTimeout(()=>res(ok),650)};
+  btns.push(b);box.append(b)});
+ if(lv().opts===2){const w2=btns.filter(x=>+x.dataset.i!==q.a);w2[Math.random()*2|0].hidden=true;let k2=1;btns.forEach(x=>{if(!x.hidden)x.firstChild.textContent=k2++})}
+ speak(q.q+'. '+btns.filter(x=>!x.hidden).map(x=>x.lastChild.textContent).join('، أو '));
+ if(help.left()>0){const h=document.createElement('button');h.className='help';h.textContent=`معين: احذف خياراً خاطئاً (${help.left()})`;
+  h.onclick=()=>{help.use();const wrong=btns.filter(x=>+x.dataset.i!==q.a&&!x.disabled&&!x.hidden);if(!wrong.length)return;wrong[Math.random()*wrong.length|0].disabled=true;h.remove();$('#bHelpLeft').textContent=`مساعدات معين: ${help.left()}`};box.append(h)}
+})}
+async function battle(type){
+ playMusic('battle');SFX.enc();const E=ENEMIES[type];mode='battle';const scr=$('#battle');scr.hidden=false;
+ const L=lv(),maxHp=Math.max(2,E.hp+L.hpAdj),fullPool=S.level==='adv'?[...E.pool,...(QA[type]||[])]:E.pool;let hp=maxHp,hearts=L.hearts,helps=L.helps,pool=shuffle([...fullPool]),result;
+ $('#bName').textContent=E.name;$('#bMe').textContent=S.name;$('#bHelpLeft').textContent=`مساعدات معين: ${helps}`;
+ const cv=$('#bCv');cv.className='';drawBattleFoe(type);
+ {const hc=$('#bHeroCv').getContext('2d');c=hc;hc.clearRect(0,0,48,60);hc.save();hc.scale(3,3);drawPerson(0,0,'up',0,LOOK[S.hero]);hc.restore()}
+ hpRow($('#bHp'),hp,maxHp);hpRow($('#bHearts'),hearts,L.hearts);
+ await bSay(`ظهر ${E.name}!`);await bSay(`«${E.taunt}»`);
+ while(true){
+  if(!pool.length)pool=shuffle([...fullPool]);
+  const q=pool.pop();
+  const ok=await ask(q,{left:()=>helps,use:()=>helps--});
+  if(ok){SFX.right();setTimeout(SFX.hit,250);hp--;S.pts+=10;cv.classList.remove('hit');cv.offsetWidth;cv.classList.add('hit');hpRow($('#bHp'),hp,maxHp);
+   await bSay('إصابة معرفة! '+q.w);
+   if(hp<=0){cv.classList.add('gone');await bSay(`هزمت ${E.name}! +${maxHp*10} نقطة معرفة`);result='win';break}}
+  else{SFX.wrong();setTimeout(SFX.hurt,250);hearts--;scr.classList.remove('ouch');scr.offsetWidth;scr.classList.add('ouch');setTimeout(()=>scr.classList.remove('ouch'),500);hpRow($('#bHearts'),hearts,L.hearts);
+   await bSay(`${E.name} ${E.atk} الجواب الصحيح: «${q.o[q.a]}». ${q.w}`);
+   if(hearts<=0){await bSay('معين: لا تزعل! اللي يتعلم من غلطته يصير أقوى. خلنا نرجع ونحاول مرة ثانية.');result='lose';break}}
+ }
+ scr.classList.remove('ouch');scr.hidden=true;mode='map';needRelease=true;save();playMusic('world');if(result==='win')SFX.fanfare();return result;
+}
+
+/* ---------------- rendering ---------------- */
+const cv=$('#cv'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+function drawTile(M,tx,ty,x,y,t){
+ const tl=tileAt(M,tx,ty);
+ if(M.kind==='fort'){
+  if(tl==='#'){const below=tileAt(M,tx,ty+1);
+   if(below!=='#'&&ty+1<M.h){P(x,y,16,16,'#3a2c62');for(let r=0;r<4;r++){P(x,y+4+r*3,16,1,'#2e2350');P(x+((r%2)?4:10),y+4+r*3,1,3,'#2e2350')}P(x,y,16,3,'#5a479a')}
+   else{P(x,y,16,16,'#1a1033');if(hash(tx,ty)>.6)P(x+5,y+6,3,3,'#22163f')}return}
+  P(x,y,16,16,'#2b2050');P(x+15,y,1,16,'#33275e');P(x,y+15,16,1,'#33275e');
+  if(hash(tx,ty,2)>.72){P(x+3,y+8,8,1,'#2f6f86');P(x+10,y+5,1,4,'#2f6f86');P(x+10,y+4,2,2,'#5ee6f0')}
+  if(tl==='t'){P(x+5,y+8,6,8,'#4b3a7a');P(x+4,y+7,8,2,'#6b55a8');const f=Math.sin(t*8+tx)*1.2;
+   c.fillStyle='rgba(94,230,240,.18)';c.beginPath();c.arc(x+8,y+4,8,0,7);c.fill();P(x+6,y+2+f,4,5,'#5ee6f0');P(x+7,y+1+f,2,2,'#e6ffff')}
+  if(tl==='E'){P(x+2,y,12,16,'#120a24');P(x+4,y+10,8,6,'#e8d3ad');P(x+3,y,10,2,'#5a479a')}
+  return}
+ switch(tl){
+  case '~':{P(x,y,16,16,'#2f4fa6');const o=(t*6+tx*5)%16;P(x+((o+hash(tx,ty)*8)%14),y+4,4,1,'#6f8fe0');P(x+((o*1.3+6)%14),y+11,3,1,'#5876d0');break}
+  case 'b':P(x,y,16,16,'#f0e0bc');P(x,y,16,2,'#ffffff');P(x+(hash(tx,ty)*12|0),y+8,1,1,'#d8c49c');break;
+  case ',':case 'P':P(x,y,16,16,'#86b35b');P(x+(hash(tx,ty)*12|0),y+4,1,3,'#5f9147');P(x+(hash(tx,ty,1)*12|0)+2,y+10,1,3,'#5f9147');break;
+  case '=':case 'X':case 'S':{const pc=tl==='S'?null:1;
+   if(tl==='S'){P(x,y,16,16,'#eadcc0')}else P(x,y,16,16,'#eadcc0');
+   const np=(a,b)=>'=XS'.includes(tileAt(M,a,b));
+   if(!np(tx,ty-1))P(x,y,16,1,'#c9b48c');if(!np(tx,ty+1))P(x,y+15,16,1,'#c9b48c');if(!np(tx-1,ty))P(x,y,1,16,'#c9b48c');if(!np(tx+1,ty))P(x+15,y,1,16,'#c9b48c');
+   if(hash(tx,ty,3)>.82&&pc){P(x+3,y+7,7,1,'#4fd8cf');P(x+9,y+4,1,3,'#4fd8cf');P(x+2,y+6,2,2,'#2fc4a8')}
+   else if(hash(tx,ty,4)>.6)P(x+(hash(tx,ty,5)*13|0),y+(hash(tx,ty,6)*13|0),2,1,'#ddcca8');break}
+  case 'f':P(x,y,16,16,'#b39a70');P(x,y+3,16,10,'#3d8ccf');P(x+((t*10+tx*16)%16),y+6,3,1,'#9fd0f5');P(x+((t*10+tx*16+8)%16),y+9,2,1,'#9fd0f5');P(x,y+2,16,1,'#8e7650');break;
+  case 'M':{const top=tileAt(M,tx,ty-1)!=='M'||ty===0;
+   if(top){P(x,y,16,16,ty<4?'#2f4fa6':'#e3cfa6');for(let r=0;r<16;r++){const w=Math.min(16,r+2+(hash(tx,ty)*4|0));P(x+8-w/2,y+r,w,1,'#6e5068');P(x+8-w/2,y+r,Math.max(1,w/3),1,'#9c7b8f')}}
+   else{P(x,y,16,16,'#6e5068');if(hash(tx,ty)>.4)P(x+(hash(tx,ty,1)*10|0),y+(hash(tx,ty,2)*10|0),4,2,'#866579');if(hash(tx,ty,3)>.5)P(x+(hash(tx,ty,4)*12|0),y+(hash(tx,ty,5)*12|0),3,1,'#56404f')}break}
+  case 'R':{P(x,y,16,16,'#e6d0a6');const top=tileAt(M,tx,ty-1)!=='R';
+   if(top){P(x,y,16,3,'#c9ab7c');for(let i=0;i<16;i+=4)P(x+i,y-2,2,3,'#f2e2c2')}
+   P(x,y+15,16,1,'#d1b88c');if(hash(tx,ty)>.75)P(x+5,y+6,4,3,'#d9c196');break}
+  case 'W':P(x,y,16,16,'#d4b98c');P(x,y,16,2,'#b89c6e');P(x+6,y+5,4,6,'#3b2d58');P(x+7,y+4,2,1,'#3b2d58');P(x+5,y+11,6,1,'#b89c6e');break;
+  case 'D':P(x,y,16,16,'#d4b98c');P(x,y,16,2,'#b89c6e');P(x+3,y+4,10,12,'#7a4628');P(x+4,y+3,8,1,'#7a4628');P(x+8,y+4,1,12,'#5a3018');
+   for(let i=0;i<3;i++){P(x+5,y+6+i*3,1,1,'#e8b84a');P(x+11,y+6+i*3,1,1,'#e8b84a')}break;
+  case 'F':{P(x,y,16,16,'#d6b583');const top=tileAt(M,tx,ty-1)!=='F';
+   if(top){P(x,y,16,3,'#b8935f');for(let i=0;i<16;i+=5){P(x+i,y-3,3,3,'#e6c793');P(x+i+1,y-4,1,1,'#e6c793')}}
+   if(hash(tx,ty)>.7)P(x+4,y+7,6,1,'#c4a272');break}
+  case 'K':case 'G':P(x,y,16,16,'#b8935f');for(let r=0;r<3;r++)P(x,y+4+r*5,16,1,'#a17f50');if(tileAt(M,tx,ty-1)==='F')P(x,y,16,2,'#8f7046');
+   if(tl==='K'&&hash(tx,ty)>.55)P(x+7,y+5,2,6,'#4a3020');
+   if(tl==='G'){P(x+2,y+3,12,13,'#5a3018');P(x+3,y+1,10,2,'#5a3018');P(x+4,y,8,1,'#5a3018');P(x+8,y+3,1,13,'#3a1e0e');for(let i=0;i<4;i++){P(x+4,y+5+i*3,1,1,'#e8b84a');P(x+12,y+5+i*3,1,1,'#e8b84a')}}break;
+  default:P(x,y,16,16,'#e3cfa6');if(hash(tx,ty)>.5)P(x+(hash(tx,ty,1)*14|0),y+(hash(tx,ty,2)*14|0),1,1,'#c9ad7e');if(hash(tx,ty,7)>.7)P(x+(hash(tx,ty,8)*14|0),y+(hash(tx,ty,9)*14|0),2,1,'#d6bd8e');
+ }
+}
+function drawTall(tl,x,y,t,tx,ty){
+ switch(tl){
+  case 'T':case 'P':{for(let i=0;i<20;i+=2)P(x+7,y+14-i,3,2,i%4?'#8a5a33':'#a06c3f');
+   const cx=x+8,cy=y-7,sw=Math.sin(t*1.5+tx)*0.05;
+   [[-1,-.25],[1,-.25],[-1,.35],[1,.35],[-.45,-1],[.45,-1],[-.85,.85],[.85,.85]].forEach(([dx,dy],n)=>{for(let k=1;k<8;k++){P(cx+(dx+sw)*k,cy+dy*k+k*k*.13,2,1,k<4?'#3f8a4a':(n%2?'#5aa857':'#4c9a50'))}});
+   P(cx-2,cy+1,4,2,'#c0602a');break}
+  case 'L':{P(x+7,y-8,2,22,'#3b2a6a');P(x+5,y-11,6,3,'#2a1a55');const a=.18+Math.sin(t*3+tx)*.06;c.fillStyle=`rgba(111,240,224,${a})`;c.beginPath();c.arc(x+8,y-9,8,0,7);c.fill();P(x+6,y-10,4,2,'#6ff0e0');break}
+  case 'S':P(x+7,y+6,2,9,'#6b4428');P(x+1,y-2,14,9,'#5b2fa6');P(x+1,y-2,14,1,'#5ee6f0');P(x+1,y+6,14,1,'#5ee6f0');P(x+3,y+1,10,1,'#c9b8ef');P(x+3,y+3,7,1,'#c9b8ef');break;
+  case 'X':{const lv=2+S.freed.length;P(x+3,y-26,26,41,'#34196e');for(let i=0;i<5;i++)P(x+6+i*5,y-22,2,30,'#5b2fa6');P(x+3,y-26,26,2,'#5ee6f0');
+   P(x+5,y-3,22,9,'#120a2e');for(let i=0;i<10;i++)P(x+6+i*2,y+3-(i<lv?5:1),1,i<lv?5:1,i<2?'#c9b8ef':i<lv?'#3fe0b0':'#3a2a6a');
+   const bob=Math.sin(t*2)*1.5;c.save();c.translate(x+16,y-33+bob);c.rotate(Math.PI/4);c.fillStyle='#2fc4a8';c.fillRect(-5,-5,10,10);c.fillStyle='#e6fffa';c.fillRect(-2,-2,4,4);c.restore();break}
+  case 'Y':P(x+2,y+12,12,4,'#6b5a7a');P(x+5,y-22,6,34,'#f4f1ea');P(x+10,y-22,1,34,'#cfc8d8');P(x+6,y-25,4,3,'#d9304a');P(x+7,y-27,2,2,'#d9304a');
+   P(x+5,y-12,6,2,'#d9304a');P(x+5,y-9,6,2,'#2e9a4f');P(x+7,y-18,2,2,'#5ee6f0');P(x+3,y+6,2,6,'#d9304a');P(x+11,y+6,2,6,'#d9304a');break;
+ }
+}
+function drawFortTowers(cam,t){
+ const tw=(tx,ty)=>{const x=tx*T-cam.x,y=ty*T-cam.y;P(x-2,y-22,20,38,'#c8a06c');P(x+12,y-22,6,38,'#a8824f');for(let i=0;i<5;i++)P(x-2+i*4,y-26,2,4,'#dcb882');P(x+6,y-10,2,6,'#4a3020')};
+ const cx=27*T+8-cam.x,cy=18*T-cam.y;
+ c.fillStyle='#c79f6b';c.beginPath();c.arc(cx,cy+6,20,0,7);c.fill();c.fillStyle='#ddb983';c.beginPath();c.arc(cx,cy,20,0,7);c.fill();
+ c.fillStyle='#b8935f';c.beginPath();c.arc(cx,cy,14,0,7);c.fill();
+ for(let a=0;a<12;a++){const ang=a/12*Math.PI*2;P(cx+Math.cos(ang)*18-1,cy+Math.sin(ang)*18-3,3,3,'#efcf98')}
+ return [{y:22,fn:()=>tw(23,22)},{y:22,fn:()=>tw(31,22)}];
+}
+function drawSign(b,cam,t){
+ const d=DISTRICTS[b.dist-1],free=S.freed.includes(b.dist);
+ const x=b.dx*T+8-cam.x, y=(b.fort?b.y*T-34:b.y*T-12)-cam.y+Math.sin(t*2+b.dist)*1.5;
+ if(free){c.fillStyle='rgba(94,230,240,.25)';c.beginPath();c.arc(x,y,11,0,7);c.fill()}
+ const open=!free&&isOpen(b.dist);if(open){c.fillStyle=`rgba(242,193,78,${.25+.15*Math.sin(t*4)})`;c.beginPath();c.arc(x,y,11,0,7);c.fill()}
+ c.save();c.translate(x,y);c.rotate(Math.PI/4);c.fillStyle=free?d.col:'#2a1a55';c.fillRect(-6,-6,12,12);c.fillStyle=free?'#ffffff':open?'#f2c14e':'#7b5cc0';c.fillRect(-6,-6,12,1);c.fillRect(-6,5,12,1);c.fillRect(-6,-6,1,12);c.fillRect(5,-6,1,12);c.restore();
+ drawDigit(b.dist,Math.round(x)-1,Math.round(y)-2,free?'#14093a':open?'#f2c14e':'#c9b8ef');
+}
+function drawFog(b,cam,t){
+ for(let i=0;i<9;i++){const px=b.x*T+((hash(i,b.dist)*b.w*T+t*6*(i%2?1:-1))%(b.w*T+10))-cam.x-5, py=b.y*T+hash(b.dist,i)*b.h*T-cam.y+Math.sin(t+i)*3;
+  c.fillStyle=`rgba(150,110,225,${.14+.06*Math.sin(t*1.3+i)})`;c.beginPath();c.arc(px,py,7+hash(i,i)*6,0,7);c.fill()}
+}
+function render(t){
+ c=g;const M=MAPS[cur];
+ g.fillStyle='#0d0620';g.fillRect(0,0,240,240);
+ const ppx=(pl.moving?pl.fx+(pl.tx-pl.fx)*pl.prog:pl.x)*T, ppy=(pl.moving?pl.fy+(pl.ty-pl.fy)*pl.prog:pl.y)*T;
+ const cam={x:M.w*T<=240?(M.w*T-240)/2:Math.max(0,Math.min(M.w*T-240,ppx+8-120)),y:M.h*T<=240?(M.h*T-240)/2:Math.max(0,Math.min(M.h*T-240,ppy+8-120))};
+ cam.x=Math.round(cam.x);cam.y=Math.round(cam.y);
+ const x0=Math.floor(cam.x/T),y0=Math.floor(cam.y/T);
+ for(let ty=y0;ty<=y0+VIEW;ty++)for(let tx=x0;tx<=x0+VIEW;tx++){if(tx<0||ty<0||tx>=M.w||ty>=M.h)continue;drawTile(M,tx,ty,tx*T-cam.x,ty*T-cam.y,t)}
+ const list=[];
+ if(M.kind==='world'){
+  for(let ty=y0;ty<=y0+VIEW+3;ty++)for(let tx=x0-1;tx<=x0+VIEW;tx++){const tl=tileAt(M,tx,ty);
+   if('TPLSXY'.includes(tl)&&!(tl==='X'&&tileAt(M,tx-1,ty)==='X'))list.push({y:ty,fn:()=>drawTall(tl,tx*T-cam.x,ty*T-cam.y,t,tx,ty)})}
+  list.push(...drawFortTowers(cam,t));
+ }
+ NPCS.filter(n=>n.map===cur).forEach(n=>list.push({y:n.y,fn:()=>drawPerson(n.x*T-cam.x,n.y*T-cam.y-4,n.dir,0,LOOK[n.L])}));
+ if(cur==='fort')FOES.filter(f=>!S.beaten.includes(f.id)).forEach(f=>list.push({y:f.y,fn:()=>{const b=Math.round(Math.sin(t*3+f.x)*1.5);
+   if(f.type==='boss'){c.fillStyle='rgba(150,110,225,.25)';c.beginPath();c.arc(f.x*T+8-cam.x,f.y*T+4-cam.y,20,0,7);c.fill();drawSpr('boss',f.x*T-8-cam.x,f.y*T-14-cam.y+b,2)}
+   else drawSpr(ENEMIES[f.type].spr,f.x*T-cam.x,f.y*T-cam.y-2+b,1)}}));
+ const step=pl.moving?[1,0,2,0][Math.floor(pl.walk*7)%4]:0;
+ list.push({y:ppy/T+.01,fn:()=>drawPerson(ppx-cam.x,ppy-cam.y-4,pl.dir,step,LOOK[S.hero])});
+ list.push({y:moe.y/T-.05,fn:()=>drawMoeen(moe.x+8-cam.x,moe.y+2-cam.y+Math.sin(t*3)*2)});
+ list.sort((a,b)=>a.y-b.y).forEach(o=>o.fn());
+ if(M.kind==='world'){M.blds.forEach(b=>{if(!S.freed.includes(b.dist))drawFog(b,cam,t)});M.blds.forEach(b=>drawSign(b,cam,t))}
+ else{c.fillStyle='rgba(120,80,200,.08)';c.fillRect(0,0,240,240)}
+}
+
+/* ---------------- loop ---------------- */
+let last=performance.now();
+function frame(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+ if(mode==='map'){
+  if(pl.moving){pl.prog+=dt*5;pl.walk+=dt;if(pl.prog>=1){pl.x=pl.tx;pl.y=pl.ty;pl.moving=false;S.x=pl.x;S.y=pl.y;S.dir=pl.dir;save()}}
+  if(!pl.moving){const d=heldDir();if(d){pl.dir=d;tryMove(d)}else pl.walk=0}
+ }
+ const tg=moe.trail[moe.trail.length-1]||[pl.x,pl.y];
+ const k=Math.min(1,dt*7);moe.x+=(tg[0]*T-moe.x)*k;moe.y+=(tg[1]*T-moe.y)*k;
+ if(mode!=='title')render(t);
+ requestAnimationFrame(frame);
+}
+
+/* ---------------- menu ---------------- */
+let tab='hero';
+function openMenu(){if(mode!=='map')return;SFX.open();mode='menu';$('#menu').hidden=false;renderMenu()}
+function closeMenu(){hush();$('#menu').hidden=true;mode='map';needRelease=true}
+$('#menuBtn').onclick=()=>openMenu();$('#closeMenu').onclick=closeMenu;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderMenu()});
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function renderMenu(){
+ document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+ const body=$('#menuBody');body.innerHTML='';const pane=el('div','pane');body.append(pane);
+ if(tab==='hero'){
+  const me=el('div','card me');const cvs=el('canvas');cvs.width=16;cvs.height=20;c=cvs.getContext('2d');drawPerson(0,0,'down',0,LOOK[S.hero]);
+  const info=el('div');info.append(el('h3',null,S.name),el('p',null,`نقاط المعرفة: ${S.pts} · البطاقات: ${S.cards.length}/${CARDS.length}`),el('p',null,(S.finalWon?'وصل إلى 2040':`الفصل ${curChapter().n} · ${curChapter().years}`)+` · مستوى ${lv().name}`));me.append(cvs,info);pane.append(me);
+  const pc=el('div','card');pc.append(el('p','lbl','المرتكزات الأربعة'));
+  PILLARS.forEach(([k,n])=>{const r=el('div','pillar');r.append(el('span',null,n));const ds=el('div','dias');for(let i=0;i<5;i++)ds.append(el('i','dia'+(i<S.pillars[k]?' on':'')));r.append(ds);pc.append(r)});pane.append(pc);
+  const bc=el('div','card');bc.append(el('p','lbl','الأوسمة'));
+  if(S.freed.length){const bs=el('div','badges');DISTRICTS.filter(d=>S.freed.includes(d.id)).forEach(d=>bs.append(el('span','badge',d.badge)));if(S.finalWon)bs.append(el('span','badge','حارس الوادي الرقمي'));bc.append(bs)}else bc.append(el('p','muted','حرّر حارة لتحصل على أول وسام.'));pane.append(bc);
+  const rc=el('div','card');const rb=el('button','btn ghost small','ابدأ من جديد');rb.onclick=()=>{rc.innerHTML='';rc.append(el('p','muted','سيُمسح تقدّمك كله. متأكد؟'));
+   const row=el('div');row.style.cssText='display:flex;gap:8px;margin-top:10px';const y=el('button','btn warn small','نعم، امسح');const n=el('button','btn ghost small','لا');
+   y.onclick=()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}location.reload()};n.onclick=renderMenu;row.append(y,n);rc.append(row)};rc.append(rb);pane.append(rc);
+ }else if(tab==='set'){
+  const sc=el('div','card');
+  const seg=(title,opts,curv,on,note)=>{const w=el('div','set');w.append(el('h4',null,title));const g2=el('div','seg');
+   opts.forEach(([v,t])=>{const b=el('button',null,t);b.setAttribute('aria-pressed',v===curv);b.onclick=()=>{on(v);renderMenu()};g2.append(b)});w.append(g2);if(note)w.append(el('p','muted',note));sc.append(w)};
+  seg('مستوى اللعب',[['easy','سهل'],['mid','متوسط'],['adv','متقدم']],S.level||'mid',v=>{S.level=v;save()},`${lv().ages}: ${lv().note}`);
+  seg('حجم النص',[[1,'عادي'],[1.15,'كبير'],[1.3,'أكبر']],PR.fs,v=>{PR.fs=v;savePR();applyPR()});
+  seg('سرعة ظهور الكلام',[['normal','عادية'],['fast','سريعة'],['instant','فورية']],PR.speed,v=>{PR.speed=v;savePR()});
+  if(TTS)seg('قراءة الكلام بصوت عالٍ',[[true,'تشغيل'],[false,'إيقاف']],!!PR.tts,v=>{PR.tts=v;savePR();if(v)speak('أهلاً! أنا معين، وبقرأ لك الكلام.');else hush()},arVoice?null:'إذا ما سمعت شي، جهازك ما فيه صوت عربي مثبت.');
+  pane.append(sc);
+ }else if(tab==='cards'){
+  pane.append(el('p','muted',`جمعت ${S.cards.length} من ${CARDS.length} بطاقة. كل بطاقة معلومة حقيقية من كتيّب البرنامج.`));
+  const g2=el('div','kcards');CARDS.forEach((cd,i)=>{const has=S.cards.includes(cd.id);const k=el('div','kcard'+(has?'':' locked'));const n=el('span','num');n.append(el('b',null,i+1));
+   k.append(n,el('h4',null,has?cd.t:'بطاقة مقفلة'),el('p',null,has?cd.x:'تجدها عند: '+cd.src));g2.append(k)});pane.append(g2);
+ }else{
+  const dc=el('div','card');DISTRICTS.forEach(d=>{const free=S.freed.includes(d.id);const r=el('div','dist'+(free?' free':''));const n=el('span','n');n.append(el('b',null,d.id));
+   const tx=el('div');tx.append(el('h4',null,d.place),el('p',null,'برنامج '+d.prog));
+   r.append(n,tx,el('span','chip'+(free?' ok':isOpen(d.id)?' go':''),free?'محرّرة':isOpen(d.id)?'مفتوحة':'الفصل '+chapterOf(d.id).n));dc.append(r)});pane.append(dc);
+ }
+}
+
+/* ---------------- title ---------------- */
+(()=>{const m=$('#mosaic');const cols=['#ffffff','#2fc4a8','#5ee6f0','#7b8cff','#b07cff','transparent'];
+ for(let i=0;i<21;i++){const e=document.createElement('i');e.style.background=cols[Math.floor(hash(i,3)*cols.length)];m.append(e)}m.parentNode&&$('#mosaic2').append(...[...m.children].map(x=>x.cloneNode()))})();
+function drawPreviews(){document.querySelectorAll('.hero-card').forEach(b=>{const x=b.querySelector('canvas').getContext('2d');c=x;x.clearRect(0,0,64,80);x.save();x.scale(4,4);drawPerson(0,0,'down',0,LOOK[b.dataset.h]);x.restore()})}
+drawPreviews();
+let pick='boy',pickL='mid';
+const lvlNote=()=>{$('#lvlNote').textContent=LV[pickL].note};lvlNote();
+document.querySelectorAll('#lvlPick .lvl').forEach(b=>b.onclick=()=>{pickL=b.dataset.l;document.querySelectorAll('#lvlPick .lvl').forEach(x=>x.setAttribute('aria-pressed',x===b));lvlNote()});
+document.querySelectorAll('.hero-card').forEach(b=>b.onclick=()=>{pick=b.dataset.h;document.querySelectorAll('.hero-card').forEach(x=>x.setAttribute('aria-pressed',x===b));
+ const inp=$('#heroName');if(inp.value===''||inp.value==='سالم'||inp.value==='شيخة')inp.value=pick==='boy'?'سالم':'شيخة'});
+const saved=loadSave();if(saved)$('#contBtn').hidden=false;
+$('#sndBtn').onclick=()=>{auInit();setSound(!AU.on);if(AU.on)SFX.ok()};setSound(AU.on);
+$('#mnBody').addEventListener('click',e=>{if(e.target.closest('button'))SFX.tap()});
+$('#newBtn').onclick=()=>{$('#titleMain').hidden=true;$('#titleSel').hidden=false};
+$('#backBtn').onclick=()=>{$('#titleMain').hidden=false;$('#titleSel').hidden=true};
+$('#contBtn').onclick=()=>{S=Object.assign(fresh(),saved);begin(false)};
+$('#startBtn').onclick=()=>{S=fresh();S.hero=pick;S.level=pickL;if(pickL==='easy'&&TTS){PR.tts=true;savePR()}S.name=($('#heroName').value.trim()||(pick==='boy'?'سالم':'شيخة')).slice(0,12);save();begin(true)};
+async function begin(isNew){
+ auInit();playMusic(S.finalWon?'ending':'world');
+ $('#title').hidden=true;placePlayer(S.map,S.x,S.y,S.dir);mode='map';hud();
+ if(isNew){
+  await chapterCard(CHAPTERS[0]);
+  await say([{w:'معين',t:`يا هلا يا ${S.name}! أنا معين، مساعدك الذكي. اسمي على اسم النموذج اللغوي الوطني «معين AI».`}]);award('c4');
+  await say([{w:'معين',t:'هذي مدينة الوادي الرقمي. الاقتصاد الرقمي هنا يساوي 2% بس من اقتصاد البلد كله.'},{w:'معين',t:'خطة عُمان إننا نوصل 10% بحلول 2040. شوف العداد فوق!'}]);award('c3');
+  await say([{w:'معين',t:'بس ملك الضباب غطّى الحارات الثماني... وأخطرها حصن الأمان اللي يحمي كل شي رقمي.'},{w:'معين',t:'امشِ بالأسهم، واضغط A عشان تكلّم الناس. الحصن في جنوب شرق المدينة. يلا نبدأ!'}]);
+ }
+}
+addEventListener('resize',fit);
+function fit(){const st=$('#stage').getBoundingClientRect();const s=Math.max(160,Math.floor(Math.min(st.width,st.height)-12));cv.style.width=s+'px';cv.style.height=s+'px'}
+fit();setTimeout(fit,300);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
