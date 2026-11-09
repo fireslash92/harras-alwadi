@@ -208,6 +208,18 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 .credit{margin:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:14px;color:var(--lav);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0}
 .credit b{font-family:var(--f-display);font-weight:400;font-size:22px;color:var(--ink)}
 .credit span{font-size:13px;color:var(--cyan);font-weight:700}
+
+/* Chibi portraits */
+.port{display:block;width:100%;height:100%}
+.d-port{position:absolute;right:10px;top:-30px;width:80px;height:80px;border-radius:18px;overflow:hidden;border:2px solid var(--cyan);box-shadow:0 6px 16px rgba(0,0,0,.45);background:var(--violet-9)}
+.d-port.pop{animation:portpop .28s ease-out}
+@keyframes portpop{from{transform:translateY(6px) scale(.92)}}
+#dlg.has-port{padding-inline-start:102px}
+#dlg.has-port .d-name{right:100px}
+#dlg.has-port{min-height:96px}
+.b-port{width:44px;height:44px;border-radius:12px;overflow:hidden;border:1.5px solid var(--cyan);flex:none}
+.hc-port{width:110px;height:110px;border-radius:20px;overflow:hidden;display:block}
+.me .m-port{width:72px;height:72px;border-radius:16px;overflow:hidden;flex:none;border:1.5px solid var(--line)}
 /* Levels & settings */
 .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .lvl{background:var(--panel);border:2px solid rgba(201,184,239,.25);border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;gap:2px;align-items:center;font-weight:800;font-size:16px}
@@ -302,7 +314,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
   <div id="quest"></div>
   <main id="stage">
     <canvas id="cv" width="240" height="240"></canvas>
-    <div id="dlg" hidden><div class="d-name" id="dName"></div><p id="dText"></p><span class="d-next"></span></div>
+    <div id="dlg" hidden><div class="d-port" id="dPort" hidden></div><div class="d-name" id="dName"></div><p id="dText"></p><span class="d-next"></span></div>
     <div id="toast" hidden></div>
   </main>
   <div id="pad" dir="ltr">
@@ -333,8 +345,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
   <div class="screen-in" id="titleSel" hidden>
     <h2 class="h2">اختر بطلك</h2>
     <div class="heroes">
-      <button class="hero-card" data-h="boy" aria-pressed="true"><canvas width="64" height="80"></canvas>بطل</button>
-      <button class="hero-card" data-h="girl" aria-pressed="false"><canvas width="64" height="80"></canvas>بطلة</button>
+      <button class="hero-card" data-h="boy" aria-pressed="true"><span class="hc-port"></span>بطل</button>
+      <button class="hero-card" data-h="girl" aria-pressed="false"><span class="hc-port"></span>بطلة</button>
     </div>
     <label class="field">اسم البطل<input id="heroName" maxlength="12" value="سالم" autocomplete="off"></label>
     <div class="field">مستوى اللعب
@@ -354,7 +366,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
   <div class="screen-in">
     <div class="b-top"><b id="bName"></b><div class="hp enemy" id="bHp"></div></div>
     <div class="b-arena"><canvas id="bCv" width="160" height="160"></canvas><canvas id="bHeroCv" width="48" height="60"></canvas></div>
-    <div class="b-me"><span id="bMe"></span><div class="hp" id="bHearts"></div><span class="help-left" id="bHelpLeft"></span></div>
+    <div class="b-me"><span class="b-port" id="bPort"></span><span id="bMe"></span><div class="hp" id="bHearts"></div><span class="help-left" id="bHelpLeft"></span></div>
     <div class="b-box" id="bBox"><p id="bMsg"></p><span class="d-next"></span></div>
     <div class="b-opts" id="bOpts"></div>
   </div>
@@ -692,6 +704,117 @@ function setSound(on){AU.on=on;try{localStorage.setItem('harras-sound',on?'on':'
 addEventListener('pointerdown',auInit,true);addEventListener('keydown',auInit,true);
 document.addEventListener('visibilitychange',()=>{if(!AU.ctx)return;document.hidden?AU.ctx.suspend().catch(()=>{}):AU.on&&AU.ctx.resume().catch(()=>{})});
 
+
+/* ---------------- chibi portraits (SVG) ---------------- */
+const CH={
+ boy:{skin:'#e0a77e',iris:'#7a4520',hair:'#1e1414',cap:'kumma',capCol:'#f7f4ee',trim:'#2fc4a8',robe:'#f4f1ea',tassel:'#2fc4a8',bg:'#2fc4a8'},
+ girl:{skin:'#e0a77e',iris:'#7a4520',scarf:'#7b3fb5',scarf2:'#f2c14e',robe:'#2a9d8f',hem:'#f2c14e',bg:'#b07cff'},
+ grandpa:{skin:'#cf9670',iris:'#5a3a1f',cap:'massar',capCol:'#b8475a',trim:'#f2d27a',robe:'#e9e2d0',beard:1,brow:'#f4f4f4',bg:'#f2c14e',old:1},
+ guard:{skin:'#c68a5e',iris:'#4a2a14',hair:'#1e1414',cap:'massar',capCol:'#3b5fb8',trim:'#e8e8f0',robe:'#8a7350',khanjar:1,stache:'#2a1a14',stern:1,bg:'#6f86ff'},
+ yousef:{skin:'#e0a77e',iris:'#7a4520',hair:'#1e1414',cap:'kumma',capCol:'#ffffff',trim:'#e04a5a',robe:'#dfe6f2',tassel:'#e04a5a',star:1,bg:'#f2c14e'},
+ maryam:{skin:'#e0a77e',iris:'#7a4520',scarf:'#2fc4a8',scarf2:'#f2c14e',robe:'#d9476b',hem:'#f2c14e',bg:'#ff8fa8'},
+ amal:{skin:'#c98e62',iris:'#5a3317',scarf:'#24124f',scarf2:'#5ee6f0',robe:'#4a6be0',hem:'#5ee6f0',headset:1,bg:'#3fe0b0'},
+ sara:{skin:'#d39a70',iris:'#6b3f1f',scarf:'#ece4d2',scarf2:'#3fe0b0',robe:'#7a4fc0',hem:'#3fe0b0',shield:1,bg:'#2fc4a8'},
+ nouf:{skin:'#e0a77e',iris:'#7a4520',scarf:'#b07cff',scarf2:'#ffffff',robe:'#34196e',hem:'#5ee6f0',lanyard:1,bg:'#5ee6f0'},
+ khaled:{skin:'#d39a70',iris:'#5a3317',hair:'#1e1414',cap:'kumma',capCol:'#f7f4ee',trim:'#7b8cff',robe:'#f4f1ea',tassel:'#7b8cff',glasses:1,bg:'#7b8cff'},
+ nasser:{skin:'#c68a5e',iris:'#4a2a14',hair:'#1e1414',cap:'kumma',capCol:'#f7f4ee',trim:'#f2c14e',robe:'#ebe4f2',tassel:'#f2c14e',glasses:1,stache:'#2a1a14',bg:'#6f86ff'},
+};
+const PORT_OF={'معين':'moeen','الجد سعيد':'grandpa','يوسف':'yousef','مريم':'maryam','المهندسة أمل':'amal','حارس الحصن':'guard','المهندسة سارة':'sara','موظفة الخدمات نوف':'nouf','المهندس خالد':'khaled','المحاسب ناصر':'nasser','ملك الضباب الأكبر':'final','ملك الضباب':'boss'};
+function exprOf(t){
+ if(/أحسنت|ممتاز|وصلنا|يا هلا|هلا|شكراً|الحمد لله|عظيم|تمام|أحلى|بفضلك|الله يحفظك|لقبك|يلا/.test(t))return 'happy';
+ if(/لا تزعل|ولا يهمك|قريب!|ضباب غريب|احتل|سدّت|مقفول|قافل|انتبه|بس ملك|الناس ما/.test(t))return 'worried';
+ if(/تدري|شفت|!!|أخيراً|تعرف إن/.test(t))return 'surprised';
+ return 'neutral'}
+let pid=0;
+function eyesSVG(e,o){const ink='#1d0f1f';let s2='';
+ const brow=o.brow||'#2a1a14';
+ [[38,-1],[62,1]].forEach(([x,side])=>{const y=57;
+  if(e==='happy'){s2+=`<path d="M${x-7} ${y+1}Q${x} ${y-8} ${x+7} ${y+1}" stroke="${ink}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`;return}
+  const big=e==='surprised';const rx=big?8:7.2,ry=big?9.5:8.6;
+  if(o.old&&e==='neutral'){s2+=`<path d="M${x-6} ${y}Q${x} ${y-5} ${x+6} ${y}" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`}
+  else{s2+=`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff"/><ellipse cx="${x}" cy="${y+1}" rx="${big?4.6:5.8}" ry="${big?5.6:7.2}" fill="${o.iris}"/><ellipse cx="${x}" cy="${y+2}" rx="${big?2.2:3}" ry="${big?2.8:4}" fill="${ink}"/>`+
+   `<circle cx="${x+2.4}" cy="${y-2.8}" r="2.3" fill="#fff"/><circle cx="${x-2}" cy="${y+3.6}" r="1.1" fill="#fff"/>`+
+   `<path d="M${x-8} ${y-5.5}Q${x} ${y-11.5} ${x+8} ${y-5.5}" stroke="${ink}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`}
+  const by=big?42:45;
+  if(e==='worried')s2+=`<path d="M${x-6*side*-1-0} ${by+2}L${x+6*side*-1} ${by-2}" stroke="${brow}" stroke-width="2.6" stroke-linecap="round"/>`.replace(/L(\S+) /,(m)=>m);
+  else if(o.stern)s2+=`<path d="M${x-7} ${by-1+(side<0?0:3)}L${x+7} ${by-1+(side<0?3:0)}" stroke="${brow}" stroke-width="3" stroke-linecap="round"/>`;
+  else s2+=`<path d="M${x-6} ${by}Q${x} ${by-3.5} ${x+6} ${by}" stroke="${brow}" stroke-width="${o.old?3.4:2.4}" fill="none" stroke-linecap="round"/>`;
+ });
+ if(o.glasses)s2+=`<g fill="none" stroke="#2a1a3a" stroke-width="2"><circle cx="38" cy="57" r="10"/><circle cx="62" cy="57" r="10"/><path d="M48 56h4M28 55l-5-2M72 55l5-2"/></g>`;
+ return s2}
+function mouthSVG(e){const m='#7a2a3a';
+ if(e==='happy')return `<path d="M43 68Q50 77 57 68Z" fill="${m}"/><path d="M46 72Q50 75 54 72" fill="#ff8fa8"/>`;
+ if(e==='surprised')return `<ellipse cx="50" cy="70" rx="3.6" ry="4.6" fill="${m}"/>`;
+ if(e==='worried')return `<path d="M44 71Q47 68 50 71Q53 74 56 71" stroke="${m}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+ return `<path d="M45 68Q50 72 55 68" stroke="${m}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`}
+function portrait(key,e='neutral'){
+ const id='g'+(pid++);
+ if(key==='moeen'||key==='boss'||key==='final')return specialPort(key,e,id);
+ const o=CH[key];if(!o)return '';
+ let s2=`<svg class="port" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="${id}" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="${o.bg}" stop-opacity=".9"/><stop offset="1" stop-color="#1f1147"/></radialGradient></defs><rect width="100" height="100" fill="url(#${id})"/>`;
+ // decorative mosaic squares from the booklet
+ s2+=`<g opacity=".35" fill="#fff"><rect x="6" y="8" width="5" height="5" rx="1"/><rect x="13" y="8" width="5" height="5" rx="1"/><rect x="6" y="15" width="5" height="5" rx="1"/><rect x="88" y="80" width="5" height="5" rx="1"/></g>`;
+ if(o.scarf){
+  s2+=`<path d="M14 100C8 70 12 28 50 15C88 28 92 70 86 100Z" fill="${o.scarf}"/>`;
+  s2+=`<path d="M30 100C32 88 40 83 50 83C60 83 68 88 70 100Z" fill="${o.robe}"/><path d="M33 93C40 90 60 90 67 93" stroke="${o.hem}" stroke-width="3" fill="none"/>`;
+ }else{
+  s2+=`<path d="M12 100C14 84 30 77 50 77C70 77 86 84 88 100Z" fill="${o.robe}"/><path d="M12 100C14 84 30 77 50 77" stroke="rgba(0,0,0,.12)" stroke-width="2" fill="none"/>`;
+  s2+=`<path d="M43 76h14v6c-2 3-12 3-14 0z" fill="${o.skin}"/>`;
+  if(o.tassel)s2+=`<path d="M50 80V95" stroke="${o.tassel}" stroke-width="2.4"/><circle cx="50" cy="96" r="2.6" fill="${o.tassel}"/>`;
+  if(o.khanjar)s2+=`<path d="M22 90H78" stroke="#5a3a20" stroke-width="4"/><path d="M45 86h10l-1 5q-1 6-8 9q3-5 1-9z" fill="#dfe0ea" stroke="#9a9ab0" stroke-width="1"/>`;
+  if(o.star)s2+=`<path d="M74 86l2 4 4 .5-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.5z" fill="#f2c14e"/>`;
+ }
+ if(!o.scarf){s2+=`<circle cx="23" cy="58" r="5" fill="${o.skin}"/><circle cx="77" cy="58" r="5" fill="${o.skin}"/>`}
+ s2+=`<ellipse cx="50" cy="55" rx="27" ry="25" fill="${o.skin}"/>`;
+ if(o.hair)s2+=`<path d="M24 54C23 40 30 32 36 31L36 40C30 42 28 48 28 56Z" fill="${o.hair}"/><path d="M76 54C77 40 70 32 64 31L64 40C70 42 72 48 72 56Z" fill="${o.hair}"/>`;
+ s2+=`<ellipse cx="32" cy="66" rx="5" ry="2.6" fill="#ff8fa8" opacity="${e==='happy'?.6:.32}"/><ellipse cx="68" cy="66" rx="5" ry="2.6" fill="#ff8fa8" opacity="${e==='happy'?.6:.32}"/>`;
+ if(o.beard)s2+=`<path d="M27 58C28 86 72 86 73 58C68 72 60 75 50 75C40 75 32 72 27 58Z" fill="#f4f4f4"/><path d="M41 66Q50 61 59 66Q50 69 41 66Z" fill="#f4f4f4"/>`;
+ s2+=eyesSVG(e,o);
+ s2+=`<path d="M50 62.5l-1 2" stroke="rgba(90,40,30,.5)" stroke-width="1.5" stroke-linecap="round"/>`;
+ if(o.stache&&!o.beard)s2+=`<path d="M43 65.5Q50 62.5 57 65.5Q50 67 43 65.5Z" fill="${o.stache}"/>`;
+ s2+=mouthSVG(e);
+ if(e==='worried')s2+=`<path d="M80 40q-3 5 0 7q3-2 0-7z" fill="#9fd8ff"/>`;
+ if(o.cap==='kumma'){
+  s2+=`<path d="M22 44C21 22 35 13 50 13C65 13 79 22 78 44C70 38 60 36 50 36C40 36 30 38 22 44Z" fill="${o.capCol}"/>`;
+  s2+=`<path d="M23.5 38C32 33 42 31.5 50 31.5C58 31.5 68 33 76.5 38" stroke="${o.trim}" stroke-width="3" fill="none"/>`;
+  for(let i=0;i<6;i++){const x=29+i*8.4;s2+=`<path d="M${x} 26l2.6 2.6-2.6 2.6-2.6-2.6z" fill="${o.trim}"/>`}
+  s2+=`<g fill="${o.trim}" opacity=".7"><circle cx="38" cy="20" r="1.3"/><circle cx="50" cy="17.5" r="1.3"/><circle cx="62" cy="20" r="1.3"/><circle cx="44" cy="22" r="1"/><circle cx="56" cy="22" r="1"/></g>`;
+ }else if(o.cap==='massar'){
+  s2+=`<path d="M18 46C15 22 33 10 50 10C67 10 85 22 82 46C72 39 62 36 50 36C38 36 28 39 18 46Z" fill="${o.capCol}"/>`;
+  s2+=`<g stroke="${o.trim}" stroke-width="2.6" fill="none"><path d="M20 38C32 30 68 30 80 38"/><path d="M24 27C36 21 64 21 76 27"/><path d="M33 17C42 14 58 14 67 17"/></g>`;
+  s2+=`<circle cx="77" cy="22" r="7" fill="${o.capCol}"/><path d="M73 19l8 6M71 23l8 4" stroke="${o.trim}" stroke-width="1.6"/>`;
+ }
+ if(o.scarf){
+  s2+=`<path d="M22.5 54C21 31 35 22 50 22C65 22 79 31 77.5 54C73 38 62 33 50 33C38 33 27 38 22.5 54Z" fill="${o.scarf}"/>`;
+  s2+=`<path d="M24.5 50C27 38 38 34 50 34C62 34 73 38 75.5 50" stroke="${o.scarf2}" stroke-width="2" fill="none" stroke-dasharray="3 3"/>`;
+  s2+=`<path d="M22 54C20 70 26 80 34 84M78 54C80 70 74 80 66 84" stroke="${o.scarf}" stroke-width="6" fill="none"/>`;
+ }
+ if(o.headset)s2+=`<path d="M22 56C20 30 80 30 78 56" stroke="#120a2e" stroke-width="3.5" fill="none"/><rect x="17" y="51" width="8" height="12" rx="3" fill="#120a2e"/><path d="M21 62Q24 72 38 72" stroke="#120a2e" stroke-width="2" fill="none"/><circle cx="39" cy="72" r="2.4" fill="#5ee6f0"/>`;
+ if(o.lanyard)s2+=`<path d="M38 84L50 96L62 84" stroke="#5ee6f0" stroke-width="2.5" fill="none"/><rect x="45" y="93" width="10" height="7" rx="1.5" fill="#fff"/>`;
+ if(o.shield)s2+=`<path d="M70 85h10v5q0 6-5 9q-5-3-5-9z" fill="#3fe0b0" stroke="#fff" stroke-width="1.2"/>`;
+ return s2+'</svg>'}
+function specialPort(key,e,id){
+ if(key==='moeen'){const c1='#5ee6f0';let f='';
+  if(e==='happy')f=`<path d="M33 53q6-8 12 0M55 53q6-8 12 0" stroke="${c1}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M40 64q10 9 20 0" stroke="${c1}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  else if(e==='surprised')f=`<circle cx="39" cy="52" r="6" fill="none" stroke="${c1}" stroke-width="3.5"/><circle cx="61" cy="52" r="6" fill="none" stroke="${c1}" stroke-width="3.5"/><circle cx="50" cy="67" r="3.5" fill="${c1}"/>`;
+  else if(e==='worried')f=`<rect x="34" y="49" width="10" height="7" rx="3" fill="${c1}"/><rect x="56" y="49" width="10" height="7" rx="3" fill="${c1}"/><path d="M33 44l10 2M67 44l-10 2" stroke="${c1}" stroke-width="2.5" stroke-linecap="round"/><path d="M43 68q7-5 14 0" stroke="${c1}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else f=`<rect x="34" y="46" width="10" height="13" rx="4" fill="${c1}"/><rect x="56" y="46" width="10" height="13" rx="4" fill="${c1}"/><rect x="36" y="48" width="3" height="4" rx="1" fill="#fff"/><rect x="58" y="48" width="3" height="4" rx="1" fill="#fff"/><path d="M43 66q7 5 14 0" stroke="${c1}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  return `<svg class="port" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="${id}" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#5ee6f0" stop-opacity=".55"/><stop offset="1" stop-color="#1f1147"/></radialGradient></defs><rect width="100" height="100" fill="url(#${id})"/>
+   <path d="M50 22V12" stroke="${c1}" stroke-width="3"/><circle cx="50" cy="10" r="4.5" fill="#3fe0b0"/>
+   <rect x="10" y="48" width="8" height="16" rx="3" fill="#3fe0b0"/><rect x="82" y="48" width="8" height="16" rx="3" fill="#3fe0b0"/>
+   <circle cx="50" cy="56" r="34" fill="#24124f" stroke="${c1}" stroke-width="4"/><rect x="25" y="36" width="50" height="40" rx="14" fill="#120a2e"/>${f}
+   <ellipse cx="34" cy="31" rx="6" ry="3" fill="#fff" opacity=".35" transform="rotate(-30 34 31)"/>${e==='happy'?'<ellipse cx="30" cy="70" rx="5" ry="2.5" fill="#ff8fa8" opacity=".55"/><ellipse cx="70" cy="70" rx="5" ry="2.5" fill="#ff8fa8" opacity=".55"/>':''}</svg>`}
+ const fin=key==='final',body=fin?'#2a1660':'#6b48a8',dark=fin?'#120a2e':'#3a1f6a',crown=fin?'#5ee6f0':'#ffd34d',eye=fin?'#ffd34d':'#ff4d6d';
+ return `<svg class="port" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="${id}" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="${eye}" stop-opacity=".35"/><stop offset="1" stop-color="#0d0620"/></radialGradient></defs><rect width="100" height="100" fill="url(#${id})"/>
+  <g fill="${dark}"><circle cx="26" cy="66" r="18"/><circle cx="74" cy="66" r="18"/><circle cx="50" cy="72" r="20"/></g>
+  <g fill="${body}"><circle cx="30" cy="56" r="20"/><circle cx="70" cy="56" r="20"/><circle cx="50" cy="46" r="24"/><circle cx="50" cy="64" r="20"/></g>
+  <path d="M32 26L36 12L44 22L50 8L56 22L64 12L68 26Z" fill="${crown}"/><circle cx="50" cy="16" r="2.5" fill="${eye}"/>
+  <path d="M30 48L44 54L30 58Z" fill="${eye}"/><path d="M70 48L56 54L70 58Z" fill="${eye}"/>
+  <path d="M38 68l4 4 4-4 4 4 4-4 4 4 4-4" stroke="#0d0620" stroke-width="3" fill="none" stroke-linejoin="round"/></svg>`}
+function showPort(name,t,e){const el2=$('#dPort'),dlg=$('#dlg');let key=PORT_OF[name];
+ if(!key){el2.hidden=true;dlg.classList.remove('has-port');return}
+ el2.innerHTML=portrait(key,e||exprOf(t));el2.hidden=false;dlg.classList.add('has-port');el2.classList.remove('pop');el2.offsetWidth;el2.classList.add('pop')}
+
 /* ---------------- maps ---------------- */
 const SOLID=new Set('~fMTPRWDFKGLSXY#tE'.split(''));
 function genWorld(){
@@ -795,7 +918,7 @@ function advance(){if(typing){typeFull();return}if(waiter){const w=waiter;waiter
 function pressA(){if(typing||waiter){advance();return}if(mode==='map')interact()}
 async function say(lines){
  const prev=mode;mode='dialog';const dlg=$('#dlg');dlg.hidden=false;
- for(const l of lines){$('#dName').textContent=l.w||'';$('#dName').hidden=!l.w;dlg.classList.toggle('sys',!!l.sys);speak(l.t);await typeText($('#dText'),l.t);await waitTap()}hush();
+ for(const l of lines){showPort(l.w,l.t,l.e);$('#dName').textContent=l.w||'';$('#dName').hidden=!l.w;dlg.classList.toggle('sys',!!l.sys);speak(l.t);await typeText($('#dText'),l.t);await waitTap()}hush();
  dlg.hidden=true;mode=prev==='dialog'?'map':prev;needRelease=true;
 }
 let toastT;
@@ -1063,7 +1186,7 @@ function ask(q,help){return new Promise(res=>{
 async function battle(type){
  playMusic('battle');SFX.enc();const E=ENEMIES[type];mode='battle';const scr=$('#battle');scr.hidden=false;
  const L=lv(),maxHp=Math.max(2,E.hp+L.hpAdj),fullPool=S.level==='adv'?[...E.pool,...(QA[type]||[])]:E.pool;let hp=maxHp,hearts=L.hearts,helps=L.helps,pool=shuffle([...fullPool]),result;
- $('#bName').textContent=E.name;$('#bMe').textContent=S.name;$('#bHelpLeft').textContent=`مساعدات معين: ${helps}`;
+ $('#bName').textContent=E.name;$('#bMe').textContent=S.name;$('#bPort').innerHTML=portrait(S.hero,'neutral');$('#bHelpLeft').textContent=`مساعدات معين: ${helps}`;
  const cv=$('#bCv');cv.className='';drawBattleFoe(type);
  {const hc=$('#bHeroCv').getContext('2d');c=hc;hc.clearRect(0,0,48,60);hc.save();hc.scale(3,3);drawPerson(0,0,'up',0,LOOK[S.hero]);hc.restore()}
  hpRow($('#bHp'),hp,maxHp);hpRow($('#bHearts'),hearts,L.hearts);
@@ -1072,10 +1195,10 @@ async function battle(type){
   if(!pool.length)pool=shuffle([...fullPool]);
   const q=pool.pop();
   const ok=await ask(q,{left:()=>helps,use:()=>helps--});
-  if(ok){SFX.right();setTimeout(SFX.hit,250);hp--;S.pts+=10;cv.classList.remove('hit');cv.offsetWidth;cv.classList.add('hit');hpRow($('#bHp'),hp,maxHp);
+  if(ok){$('#bPort').innerHTML=portrait(S.hero,'happy');SFX.right();setTimeout(SFX.hit,250);hp--;S.pts+=10;cv.classList.remove('hit');cv.offsetWidth;cv.classList.add('hit');hpRow($('#bHp'),hp,maxHp);
    await bSay('إصابة معرفة! '+q.w);
    if(hp<=0){cv.classList.add('gone');await bSay(`هزمت ${E.name}! +${maxHp*10} نقطة معرفة`);result='win';break}}
-  else{SFX.wrong();setTimeout(SFX.hurt,250);hearts--;scr.classList.remove('ouch');scr.offsetWidth;scr.classList.add('ouch');setTimeout(()=>scr.classList.remove('ouch'),500);hpRow($('#bHearts'),hearts,L.hearts);
+  else{$('#bPort').innerHTML=portrait(S.hero,'worried');SFX.wrong();setTimeout(SFX.hurt,250);hearts--;scr.classList.remove('ouch');scr.offsetWidth;scr.classList.add('ouch');setTimeout(()=>scr.classList.remove('ouch'),500);hpRow($('#bHearts'),hearts,L.hearts);
    await bSay(`${E.name} ${E.atk} الجواب الصحيح: «${q.o[q.a]}». ${q.w}`);
    if(hearts<=0){await bSay('معين: لا تزعل! اللي يتعلم من غلطته يصير أقوى. خلنا نرجع ونحاول مرة ثانية.');result='lose';break}}
  }
@@ -1211,7 +1334,7 @@ function renderMenu(){
  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
  const body=$('#menuBody');body.innerHTML='';const pane=el('div','pane');body.append(pane);
  if(tab==='hero'){
-  const me=el('div','card me');const cvs=el('canvas');cvs.width=16;cvs.height=20;c=cvs.getContext('2d');drawPerson(0,0,'down',0,LOOK[S.hero]);
+  const me=el('div','card me');const cvs=el('span','m-port');cvs.innerHTML=portrait(S.hero,'happy');
   const info=el('div');info.append(el('h3',null,S.name),el('p',null,`نقاط المعرفة: ${S.pts} · البطاقات: ${S.cards.length}/${CARDS.length}`),el('p',null,(S.finalWon?'وصل إلى 2040':`الفصل ${curChapter().n} · ${curChapter().years}`)+` · مستوى ${lv().name}`));me.append(cvs,info);pane.append(me);
   const pc=el('div','card');pc.append(el('p','lbl','المرتكزات الأربعة'));
   PILLARS.forEach(([k,n])=>{const r=el('div','pillar');r.append(el('span',null,n));const ds=el('div','dias');for(let i=0;i<5;i++)ds.append(el('i','dia'+(i<S.pillars[k]?' on':'')));r.append(ds);pc.append(r)});pane.append(pc);
@@ -1243,12 +1366,12 @@ function renderMenu(){
 /* ---------------- title ---------------- */
 (()=>{const m=$('#mosaic');const cols=['#ffffff','#2fc4a8','#5ee6f0','#7b8cff','#b07cff','transparent'];
  for(let i=0;i<21;i++){const e=document.createElement('i');e.style.background=cols[Math.floor(hash(i,3)*cols.length)];m.append(e)}m.parentNode&&$('#mosaic2').append(...[...m.children].map(x=>x.cloneNode()))})();
-function drawPreviews(){document.querySelectorAll('.hero-card').forEach(b=>{const x=b.querySelector('canvas').getContext('2d');c=x;x.clearRect(0,0,64,80);x.save();x.scale(4,4);drawPerson(0,0,'down',0,LOOK[b.dataset.h]);x.restore()})}
+function drawPreviews(){document.querySelectorAll('.hero-card').forEach(b=>{b.querySelector('.hc-port').innerHTML=portrait(b.dataset.h,b.getAttribute('aria-pressed')==='true'?'happy':'neutral')})}
 drawPreviews();
 let pick='boy',pickL='mid';
 const lvlNote=()=>{$('#lvlNote').textContent=LV[pickL].note};lvlNote();
 document.querySelectorAll('#lvlPick .lvl').forEach(b=>b.onclick=()=>{pickL=b.dataset.l;document.querySelectorAll('#lvlPick .lvl').forEach(x=>x.setAttribute('aria-pressed',x===b));lvlNote()});
-document.querySelectorAll('.hero-card').forEach(b=>b.onclick=()=>{pick=b.dataset.h;document.querySelectorAll('.hero-card').forEach(x=>x.setAttribute('aria-pressed',x===b));
+document.querySelectorAll('.hero-card').forEach(b=>b.onclick=()=>{pick=b.dataset.h;document.querySelectorAll('.hero-card').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreviews();
  const inp=$('#heroName');if(inp.value===''||inp.value==='سالم'||inp.value==='شيخة')inp.value=pick==='boy'?'سالم':'شيخة'});
 const saved=loadSave();if(saved)$('#contBtn').hidden=false;
 $('#sndBtn').onclick=()=>{auInit();setSound(!AU.on);if(AU.on)SFX.ok()};setSound(AU.on);
